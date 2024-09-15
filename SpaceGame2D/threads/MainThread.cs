@@ -24,6 +24,8 @@ namespace SpaceGame2D.threads
         public Main_PhysicsThread physics_thread;
         public Main_GraphicsThread graphics_thread;
 
+        public IWorld cur_world;
+
         private DateTime last_time;
 
         public readonly DateTime gamestart;
@@ -39,8 +41,9 @@ namespace SpaceGame2D.threads
             //TODO: Remove these!
             IWorld spawn_planet = new Planet(universes[0], new Size(200, 200), new Vector2(0, -9.8f), "Avalon_Beta");
             universes[0].worlds.Add(spawn_planet);
-            Player player = new Player(new Human(), spawn_planet);
+            Player player = new Player(Human.Instance, spawn_planet);
             players.Add(player);
+            cur_world = spawn_planet;
 
 
             main_thread = new Thread(new ThreadStart(() =>
@@ -66,9 +69,9 @@ namespace SpaceGame2D.threads
             Console.WriteLine("boot initalized!");
 
 
-            this.graphics_thread = new Main_GraphicsThread(this);//run last.
+            this.graphics_thread = new Main_GraphicsThread(this);
             this.graphics_thread.Window.Unload += Stop;
-            this.graphics_thread.Window.Run();
+            this.graphics_thread.Window.Run();//run last.
         }
 
         public void Stop()

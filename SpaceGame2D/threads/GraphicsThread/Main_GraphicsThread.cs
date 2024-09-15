@@ -13,6 +13,8 @@ using OpenTK.Graphics.OpenGL;
 using System.Resources;
 using System.Reflection.Metadata;
 using SpaceGame2D.graphics.compiledshaders;
+using SpaceGame2D.graphics.texturemanager;
+using SpaceGame2D.enviroment;
 
 namespace SpaceGame2D.threads.GraphicsThread
 {
@@ -47,18 +49,25 @@ namespace SpaceGame2D.threads.GraphicsThread
             this.Window.FramebufferResize += OnFramebufferResize;
             this.Window.Load += OnLoad;
             this.Window.Unload += OnDispose;
-            this.default_shader = new Shader("graphics/shaders/default.vert", "graphics/shaders/default.frag");
+            
         }
 
         private void OnDispose()
         {
-            this.default_shader.Dispose();
+            
+            
         }
 
 
         private void OnLoad()
         {
-            
+            ShaderManager.register("SpaceGame2D:default", new Shader("graphics/shaders/default.vert", "graphics/shaders/default.frag"));
+
+
+
+            ShaderManager.LoadAll();
+            GraphicsRegistry.LoadAll();
+            TextureManager.LoadAll();
         }
 
         public void Stop()
@@ -87,14 +96,12 @@ namespace SpaceGame2D.threads.GraphicsThread
                 Console.WriteLine("second passed on graphics thread. seconds:" + seconds_recognized.ToString());
             }
 
-            foreach (IMoveableEntity obj in Main_PhysicsThread.activePhysicsObjects)
+            List<IBlock> tiles = source_thread.cur_world.enviroment.getTiles();
+
+            foreach (IRenderableTile obj in GraphicsRegistry.getAll())
             {
-                AABB bounding_box_ourselves = AABB.Size_To_AABB(obj.position, obj.size);
 
-                bounding_box_ourselves.DrawImage_Self(default_shader, obj.currentimage, Zoom);
-
-                //Console.WriteLine(bounding_box_ourselves.TopLeft.ToString() + bounding_box_ourselves.BottomRight.ToString());
-
+                obj.DrawImage(Zoom, new System.Numerics.Vector2(0, 0));
             }
 
 

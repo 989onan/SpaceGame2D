@@ -9,14 +9,26 @@ namespace SpaceGame2D.graphics.compiledshaders
 {
     public class Shader: IShader
     {
-        public int Handle { get; }
+        public int Handle { get; private set; }
 
+        private string VertexShaderSource;
+        private string FragmentShaderSource;
 
         public Shader(string shader_vert_path, string shader_frag_path)
         {
-            string VertexShaderSource = File.ReadAllText(Path.Join(BootStrapper.path, shader_vert_path));
+            VertexShaderSource = File.ReadAllText(Path.Join(BootStrapper.path, shader_vert_path));
 
-            string FragmentShaderSource = File.ReadAllText(Path.Join(BootStrapper.path, shader_frag_path));
+            FragmentShaderSource = File.ReadAllText(Path.Join(BootStrapper.path, shader_frag_path));
+        }
+
+        public void Use()
+        {
+            GL.UseProgram(Handle);
+        }
+
+        public void Load()
+        {
+            
 
             int VertexShader = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(VertexShader, VertexShaderSource);
@@ -28,7 +40,7 @@ namespace SpaceGame2D.graphics.compiledshaders
             GL.CompileShader(VertexShader);
 
             GL.GetShader(VertexShader, ShaderParameter.CompileStatus, out int success);
-            Console.WriteLine(success);
+            //Console.WriteLine(success);
             if (success == 0)
             {
                 string infoLog = GL.GetShaderInfoLog(VertexShader);
@@ -38,7 +50,7 @@ namespace SpaceGame2D.graphics.compiledshaders
             GL.CompileShader(FragmentShader);
 
             GL.GetShader(FragmentShader, ShaderParameter.CompileStatus, out int success2);
-            Console.WriteLine(success2);
+            //Console.WriteLine(success2);
             if (success2 == 0)
             {
                 string infoLog = GL.GetShaderInfoLog(FragmentShader);
@@ -53,7 +65,7 @@ namespace SpaceGame2D.graphics.compiledshaders
             GL.LinkProgram(Handle);
 
             GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int success3);
-            Console.WriteLine(success3);
+            //Console.WriteLine(success3);
 
             GL.DetachShader(Handle, VertexShader);
             GL.DetachShader(Handle, FragmentShader);

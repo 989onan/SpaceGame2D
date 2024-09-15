@@ -60,16 +60,14 @@ namespace SpaceGame2D.threads.PhysicsThread
             {
                         
 
-                entity.position = entity.position + (entity.velocity * (float)(now - last_time).TotalSeconds);
+                entity.bounding_box.Center = entity.bounding_box.Center + (entity.velocity * (float)(now - last_time).TotalSeconds);
 
                         
                     
 
                 foreach (IStaticPhysicsObject obj in StaticPhysicsObjects.Where((obj) => obj.World == entity.World))
                 {
-                    AABB bounding_box_ourselves = new AABB(entity.position, entity.size);
-
-                    AABB bounding_box_other = new AABB(obj.position, obj.size);
+                    
 
 
                     Console.WriteLine("object collided with other object!");

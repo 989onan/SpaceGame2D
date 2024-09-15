@@ -1,4 +1,6 @@
-﻿using StbImageSharp;
+﻿using SpaceGame2D.graphics.texturemanager;
+using SpaceGame2D.utilities.math;
+using StbImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,11 +12,11 @@ namespace SpaceGame2D.enviroment.Entities
 {
     public interface IStaticPhysicsObject
     {
-        Vector2 position { get; set; }
-        Vector2 size { get; }
+        AABB bounding_box { get; set; }
 
-        ImageResult currentimage { get;  }
         ReaderWriterLockSlim _physlock { get; }
         IWorld World { get; }
+
+        IRenderableTile graphic { get; }
     }
 }

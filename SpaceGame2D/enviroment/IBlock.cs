@@ -1,4 +1,5 @@
 ﻿using SpaceGame2D.enviroment.Entities;
+using SpaceGame2D.graphics.texturemanager;
 using System;
 using System.Collections.Generic;
 using System.Drawing;

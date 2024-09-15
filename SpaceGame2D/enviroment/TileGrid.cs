@@ -37,6 +37,19 @@ namespace SpaceGame2D.enviroment
             this.size = size;
         }
 
+        public List<IBlock> getTiles()
+        {
+            List<IBlock> tiles = new List<IBlock>();
+            for (int i = 0; i < size.Width; i++)
+            {
+                for (int j = 0; j < size.Height; j++)
+                {
+                    tiles.Add(Tiles[i, j]);
+                }
+            }
+            return tiles;
+        }
+
 
         private Point convert_point(Point position)
         {

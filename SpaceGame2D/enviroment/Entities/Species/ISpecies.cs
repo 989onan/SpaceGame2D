@@ -1,4 +1,5 @@
-﻿using StbImageSharp;
+﻿using SpaceGame2D.graphics.compiledshaders;
+using StbImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -47,9 +48,6 @@ namespace SpaceGame2D.enviroment.Entities.Species
 
         int base_mana {  get; }
 
-
-        //images
-
-        ImageResult standing { get; }
+        string standing { get; }
     }
 }

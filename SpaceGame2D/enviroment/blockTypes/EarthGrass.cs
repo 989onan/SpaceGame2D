@@ -10,7 +10,6 @@ namespace SpaceGame2D.enviroment.blockTypes
 {
     internal class EarthGrass : Air
     {
-
         public new IMaterial surfaceProperties => new EarthMaterial();
     }
 }

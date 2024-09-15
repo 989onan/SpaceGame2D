@@ -10,7 +10,11 @@ namespace SpaceGame2D.graphics.compiledshaders
 {
     public interface IShader
     {
-        int Handle {  get; }
-        void Use() => GL.UseProgram(Handle);
+
+        int Handle { get; }
+        void Use();
+        void Dispose();
+
+        void Load();
     }
 }

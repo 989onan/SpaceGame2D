@@ -1,5 +1,8 @@
 ﻿using SpaceGame2D.enviroment.Entities;
+using SpaceGame2D.enviroment.Entities.Species;
 using SpaceGame2D.enviroment.materials;
+using SpaceGame2D.graphics.texturemanager;
+using SpaceGame2D.utilities.math;
 using StbImageSharp;
 using System;
 using System.Collections.Generic;
@@ -13,8 +16,9 @@ namespace SpaceGame2D.enviroment.blockTypes
 {
     public class Air : IBlock
     {
-        private Point _position;
-        public Point position { get => getPosition(); set => setPosition(value); }
+
+        private AABB private_bounding_box;
+        public AABB bounding_box { get => private_bounding_box; set => setPosition(value); }
 
         public TileGrid source_grid { get; }
 
@@ -23,31 +27,29 @@ namespace SpaceGame2D.enviroment.blockTypes
         public Air(Point position, TileGrid source_grid)
         {
             this.source_grid = source_grid;
-            this._position = position;
+            this.private_bounding_box = AABB.Size_To_AABB(new Vector2(position.X,position.Y), new Vector2(size.X, size.Y));
+            
+            //this.graphic = new RenderQuadGraphic(this, "SpaceGame2D:default", "blocks/air.png");
+
             this._physlock = new ReaderWriterLockSlim();
         }
 
         public Air() {}
 
+        public IRenderableTile graphic { get; set; }
+
         public IMaterial surfaceProperties => new AirMaterial();
-
-        Vector2 IStaticPhysicsObject.position { get { return new Vector2(this.position.X, this.position.Y); } set => throw new NotImplementedException(); }
-
-        Vector2 IStaticPhysicsObject.size => new Vector2(this.size.X, this.size.Y);
         public ReaderWriterLockSlim _physlock { get; }
 
         public IWorld World => this.source_grid.world;
 
-        public ImageResult currentimage {  get; set; }
-
-        public Point getPosition() {
-            return this._position;
-        }
-        public void setPosition(Point position)
+        public void setPosition(AABB box)
         {
-            source_grid.setTile(this._position, new Air(this._position, this.source_grid));
-            this._position = position;
-            source_grid.setTile(this._position, this);
+            Point center = new Point((int)this.bounding_box.Center.X, (int)this.bounding_box.Center.Y);
+            source_grid.setTile(center, new Air(center, this.source_grid));
+            this.private_bounding_box = box;
+            source_grid.setTile(new Point((int)box.Center.X, (int)box.Center.Y), this);
+            
         }
     }
 }

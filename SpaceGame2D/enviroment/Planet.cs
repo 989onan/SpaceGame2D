@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 using System.Numerics;
+using SpaceGame2D.graphics.texturemanager;
+using SpaceGame2D.graphics.compiledshaders;
 
 namespace SpaceGame2D.enviroment
 {

@@ -1,4 +1,5 @@
-﻿using StbImageSharp;
+﻿using SpaceGame2D.graphics.compiledshaders;
+using StbImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -21,9 +22,11 @@ namespace SpaceGame2D.enviroment.Entities.Species
 
         public float weight => 3f;
         public Human() {
-            StbImage.stbi_set_flip_vertically_on_load(1);
-            this.standing = ImageResult.FromStream(File.OpenRead(Path.Join(BootStrapper.path, "graphics/textures/species/human/human.png")),ColorComponents.RedGreenBlueAlpha);
+            
         }
+
+        public static Human Instance { get; } = new Human();
+        
 
         public float jump_height => 3f;
 
@@ -42,6 +45,7 @@ namespace SpaceGame2D.enviroment.Entities.Species
         public int max_health => 100;
         public int base_mana => 100;
 
-        public ImageResult standing { get; }
+
+        public string standing => "species/human/human.png";
     }
 }

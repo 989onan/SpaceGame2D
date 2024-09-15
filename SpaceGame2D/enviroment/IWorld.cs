@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpaceGame2D.graphics.texturemanager;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -11,8 +12,6 @@ namespace SpaceGame2D.enviroment
     {
         
         TileGrid enviroment { get; }
-
-
 
         string name { get; }
         Vector2 gravity { get; }

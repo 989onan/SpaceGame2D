@@ -1,4 +1,6 @@
 ﻿using SpaceGame2D.enviroment.Entities.Species;
+using SpaceGame2D.graphics.texturemanager;
+using SpaceGame2D.utilities.math;
 using StbImageSharp;
 using System;
 using System.Collections.Generic;
@@ -11,6 +13,7 @@ namespace SpaceGame2D.enviroment.Entities
 {
     public class LivingEntity : ILivingEntity, IMoveableEntity
     {
+        public AABB bounding_box { get; set; }
         public IWorld World { get; }
         public LivingEntity(ISpecies species, IWorld current_world, string name = "989onan", string UUID = "5358f3cc-8b59-400c-8d69-82b55fc6e667")
         {
@@ -18,10 +21,11 @@ namespace SpaceGame2D.enviroment.Entities
             this.UUID = UUID;
             this.species = species;
             this.World = current_world;
-            this.position = new Vector2 (0, 0);
+            this.bounding_box = AABB.Size_To_AABB(new Vector2(0, 0), size);
             this.velocity = new Vector2 (0, 0);
 
-            this.currentimage = species.standing;
+            this.graphic = new RenderQuadGraphic(this, "SpaceGame2D:default", species.standing);
+
 
             this._physlock = new ReaderWriterLockSlim();
         }
@@ -34,7 +38,7 @@ namespace SpaceGame2D.enviroment.Entities
         public int Armor { get => getCurArmor(); }
         public int MagicArmor { get; set; }
 
-        public Vector2 position { get; set; }
+        public Vector2 position => this.bounding_box.Center;
 
         public Vector2 size { get => getPlayerSize(); }
 
@@ -64,8 +68,9 @@ namespace SpaceGame2D.enviroment.Entities
         }
 
         public ReaderWriterLockSlim _physlock { get; }
+        
 
-        public ImageResult currentimage { get; }
+        public IRenderableTile graphic { get; set; }
 
         public bool applyForceImpulse(Vector2 velocity)
         {

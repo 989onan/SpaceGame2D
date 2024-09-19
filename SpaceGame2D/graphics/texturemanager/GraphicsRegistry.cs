@@ -11,21 +11,19 @@ namespace SpaceGame2D.graphics.texturemanager
     public class GraphicsRegistry
     {
 
-        private static List<IRenderableTile> _graphicObjects = new List<IRenderableTile>();
-        public GraphicsRegistry() {
-        
-        }
+        private static List<IRenderableGraphic> _graphicObjects = new List<IRenderableGraphic>();
+        public GraphicsRegistry() {}
 
         public static void LoadAll()
         {
-            foreach(IRenderableTile tile in _graphicObjects)
+            foreach(IRenderableGraphic tile in _graphicObjects)
             {
                 tile.LoadGraphic();
             }
             
         }
 
-        public static bool registerRenderGraphic(IRenderableTile renderGraphic)
+        public static bool registerRenderGraphic(IRenderableGraphic renderGraphic)
         {
             if (_graphicObjects.Contains(renderGraphic)) {
                 return false;
@@ -34,7 +32,7 @@ namespace SpaceGame2D.graphics.texturemanager
             return true;
         }
 
-        public static bool deregisterAABB(IRenderableTile renderGraphic)
+        public static bool deregisterRenderGraphic(IRenderableGraphic renderGraphic)
         {
             if (!_graphicObjects.Contains(renderGraphic))
             {
@@ -45,7 +43,7 @@ namespace SpaceGame2D.graphics.texturemanager
             return true;
         }
 
-        public static IReadOnlyList<IRenderableTile> getAll() {
+        public static IReadOnlyList<IRenderableGraphic> getAll() {
             return _graphicObjects.AsReadOnly(); 
         }
     }

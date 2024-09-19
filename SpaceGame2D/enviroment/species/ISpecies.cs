@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SpaceGame2D.enviroment
+namespace SpaceGame2D.enviroment.species
 {
-    public class Ship
+    public interface ISpecies
     {
+        string standing_image {  get; }
     }
 }

@@ -1,6 +1,4 @@
-﻿using SpaceGame2D.enviroment.Entities;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +12,7 @@ using System.Resources;
 using System.Reflection.Metadata;
 using SpaceGame2D.graphics.compiledshaders;
 using SpaceGame2D.graphics.texturemanager;
-using SpaceGame2D.enviroment;
+using SpaceGame2D.graphics.texturemanager.packer;
 
 namespace SpaceGame2D.threads.GraphicsThread
 {
@@ -44,12 +42,15 @@ namespace SpaceGame2D.threads.GraphicsThread
 
             //Console.WriteLine(GL.GetProgramInfoLog(default_shader));
 
-            this.Zoom = .1f;
+            this.Zoom = 1f;
             this.Window.RenderFrame += Render;
             this.Window.FramebufferResize += OnFramebufferResize;
             this.Window.Load += OnLoad;
             this.Window.Unload += OnDispose;
-            
+
+
+            //register shaders
+            ShaderManager.register("SpaceGame2D:default", new Shader("graphics/shaders/default.vert", "graphics/shaders/default.frag"));
         }
 
         private void OnDispose()
@@ -61,13 +62,13 @@ namespace SpaceGame2D.threads.GraphicsThread
 
         private void OnLoad()
         {
-            ShaderManager.register("SpaceGame2D:default", new Shader("graphics/shaders/default.vert", "graphics/shaders/default.frag"));
-
-
-
             ShaderManager.LoadAll();
+            Texture null_texture = new Texture("null.png");
+            Atlas.AddToQue(null_texture);
+            Atlas.RegenerateAtlas();
+            Atlas.LoadToGPU();
+            Atlas.UseImage();
             GraphicsRegistry.LoadAll();
-            TextureManager.LoadAll();
         }
 
         public void Stop()
@@ -96,17 +97,13 @@ namespace SpaceGame2D.threads.GraphicsThread
                 Console.WriteLine("second passed on graphics thread. seconds:" + seconds_recognized.ToString());
             }
 
-            List<IBlock> tiles = source_thread.cur_world.enviroment.getTiles();
-
-            foreach (IRenderableTile obj in GraphicsRegistry.getAll())
+            foreach (IRenderableGraphic obj in GraphicsRegistry.getAll())
             {
-
                 obj.DrawImage(Zoom, new System.Numerics.Vector2(0, 0));
             }
 
 
 
-            
 
 
 

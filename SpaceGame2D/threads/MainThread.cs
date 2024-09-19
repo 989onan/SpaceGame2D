@@ -1,6 +1,4 @@
 ﻿using SpaceGame2D.enviroment;
-using SpaceGame2D.enviroment.Entities;
-using SpaceGame2D.enviroment.Entities.Species;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -11,20 +9,17 @@ using System.Threading.Tasks;
 using System.Numerics;
 using SpaceGame2D.threads.PhysicsThread;
 using SpaceGame2D.threads.GraphicsThread;
+using SpaceGame2D.enviroment.species;
 
 namespace SpaceGame2D.threads
 {
     public class MainThread
     {
-        public List<Universe> universes = new List<Universe>();
-
-        public List<LivingEntity> players = new List<LivingEntity>();
 
         public Thread main_thread;
         public Main_PhysicsThread physics_thread;
         public Main_GraphicsThread graphics_thread;
 
-        public IWorld cur_world;
 
         private DateTime last_time;
 
@@ -32,18 +27,31 @@ namespace SpaceGame2D.threads
 
         private bool is_running;
 
+        public Player player;
+        //public Player player2;
+
 
         public MainThread()
         {
             this.gamestart = DateTime.Now;
-            universes.Add(new Universe());
+            
+            this.graphics_thread = new Main_GraphicsThread(this);
+            this.graphics_thread.Window.Unload += Stop;
+            player = new Player(Vector2.Zero, Human.instance);
+            //player2 = new Player(new Vector2(1f,0f), Avali.instance);
+
 
             //TODO: Remove these!
-            IWorld spawn_planet = new Planet(universes[0], new Size(200, 200), new Vector2(0, -9.8f), "Avalon_Beta");
+            /*Human instance = Human.Instance;
+            IWorld spawn_planet = new Planet(universes[0], new Size(1, 1), new Vector2(0, -9.8f), "Avalon_Beta");
+
+
             universes[0].worlds.Add(spawn_planet);
-            Player player = new Player(Human.Instance, spawn_planet);
+            spawn_planet.enviroment.setTile(new Point(0,0), new EarthGrass(new Point(0, 0), spawn_planet.enviroment));
+            spawn_planet.enviroment.setTile(new Point(0,-1), new EarthGrass(new Point(0, -1), spawn_planet.enviroment));
+            Player player = new Player(instance, spawn_planet);
             players.Add(player);
-            cur_world = spawn_planet;
+            cur_world = spawn_planet;*/
 
 
             main_thread = new Thread(new ThreadStart(() =>
@@ -60,7 +68,6 @@ namespace SpaceGame2D.threads
 
             this.physics_thread = new Main_PhysicsThread(this);
 
-            Main_PhysicsThread.activePhysicsObjects.Add(player);
 
 
 
@@ -69,8 +76,7 @@ namespace SpaceGame2D.threads
             Console.WriteLine("boot initalized!");
 
 
-            this.graphics_thread = new Main_GraphicsThread(this);
-            this.graphics_thread.Window.Unload += Stop;
+            
             this.graphics_thread.Window.Run();//run last.
         }
 

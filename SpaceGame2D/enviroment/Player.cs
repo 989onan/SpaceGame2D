@@ -29,7 +29,7 @@ namespace SpaceGame2D.enviroment
         public ISpecies species;
 
 
-        public Vector2 size { get; private set; }
+        public Vector2 graphic_size { get; private set; }
 
         public AABB Collider { get; }
         IRenderableGraphic graphic;
@@ -40,7 +40,7 @@ namespace SpaceGame2D.enviroment
         public Player(Vector2 position, ISpecies species) {
 
             Collider = AABB.Size_To_AABB(new Vector2(0, 0), new Vector2(1, 2));
-            this.size = new Vector2(1.2f,1.2f);
+            this.graphic_size = new Vector2(1.2f,1.2f);
             this.position = position;
             this.species = species;
 
@@ -60,7 +60,7 @@ namespace SpaceGame2D.enviroment
 
         public TextureTile UpdateCurrentImage()
         {
-            return Atlas.Tiles.GetValueOrDefault(species.standing_image);
+            return species.standing_image;
         }
     }
 }

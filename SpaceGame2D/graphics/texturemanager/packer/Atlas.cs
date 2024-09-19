@@ -24,8 +24,6 @@ namespace SpaceGame2D.graphics.texturemanager.packer
 
         private static Dictionary<string, TextureTile> _Tiles = new Dictionary<string, TextureTile>();
 
-        private static Dictionary<string, Texture> _Que = new Dictionary<string, Texture>();
-
 
         private static int Handle;
         public static byte[] texture => _internal_texture;
@@ -55,26 +53,19 @@ namespace SpaceGame2D.graphics.texturemanager.packer
             GL.BindTexture(TextureTarget.Texture2D, Handle);
         }
 
-
-        private static void PuntAllIntoQue()
-        {
-
-            foreach (TextureTile tile in _Tiles.Values)
-            {
-                _Que.Add(tile.path, new Texture(tile.path));
-            }
-
+        public static TextureTile AddToList(TextureTile texture) {
+            _Tiles.TryAdd(texture.path, texture);
+            return _Tiles.GetValueOrDefault(texture.path);
         }
-
-        public static void AddToQue(Texture texture) => _Que.TryAdd(texture.path, texture);
 
         public static void RegenerateAtlas()
         {
             Console.WriteLine("regenerating atlas!");
-            PuntAllIntoQue();
+            foreach (TextureTile tile in _Tiles.Values)
+            {
+                tile.Deload();
+            }
             BinPacker regenerator = new BinPacker();
-
-            _Tiles.Clear();
 
             regenerator.fit();
 
@@ -87,6 +78,7 @@ namespace SpaceGame2D.graphics.texturemanager.packer
 
             foreach (TextureTile tile in _Tiles.Values)
             {
+                Console.WriteLine("writing "+tile.path);
                 tile.WriteImageToAtlas(_internal_texture);
             }
 
@@ -99,24 +91,25 @@ namespace SpaceGame2D.graphics.texturemanager.packer
         private class BinPacker
         {
             public Rectangle_Obj root;
-            private List<Texture> bin = new List<Texture>();
+            private List<TextureTile> bin = new List<TextureTile>();
             public BinPacker() {
                 this.root = null;
-                this.bin = Atlas._Que.Values.ToList();
+                this.bin = Atlas._Tiles.Values.ToList();
 
                 this.bin.Sort();
-                bin.ForEach((Texture texture) =>
+                this.bin.Reverse();
+                bin.ForEach((TextureTile texture) =>
                 {
                     Console.WriteLine("texture size: " + (texture.image.Width*texture.image.Height).ToString());
                 });
-                this.bin.Reverse();
+                
             }
 
             public void fit()
             {
 
 
-                List<Texture> structure = this.bin;
+                List<TextureTile> structure = this.bin;
                 int structure_len = this.bin.Count;
                 int w = 0;
                 int h = 0;
@@ -127,7 +120,7 @@ namespace SpaceGame2D.graphics.texturemanager.packer
                 }
 
                 this.root = new Rectangle_Obj(0, 0, w, h);
-                foreach (Texture img in structure)
+                foreach (TextureTile img in structure)
                 {
                     w = img.image.Width;
                     h = img.image.Height;
@@ -137,13 +130,14 @@ namespace SpaceGame2D.graphics.texturemanager.packer
                     {
                         Rectangle_Obj fit = node.split(w, h);
 
-                        _Tiles.Add(img.path, new TextureTile(fit.x, fit.y, img));
+
+                        img.SetPositionOnNewAtlas(fit.x, fit.y);
                     }
                     else
                     {
                         Rectangle_Obj fit = this.grow_node(w, h);
 
-                        _Tiles.Add(img.path, new TextureTile(fit.x, fit.y, img));
+                        img.SetPositionOnNewAtlas(fit.x, fit.y);
                     }
 
                 }

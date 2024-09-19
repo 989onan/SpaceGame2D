@@ -25,14 +25,19 @@ namespace SpaceGame2D.enviroment
         }
 
         public Point block_position { get => grid.getTileLocation(this); set => grid.moveTileLocation(this, value); }
-        public Vector2 size => new Vector2(1, 1);
+        public Vector2 graphic_size => new Vector2(1, 1);
 
-        public AABB Collider { get => AABB.Size_To_AABB(position, size);}
+        public AABB Collider { get => AABB.Size_To_AABB(position, graphic_size);}
         public bool HasCollision { get; set; }
 
         public TextureTile currentTexture { get => UpdateCurrentImage(); } //TODO: Load texture before needing it - @989onan
 
+        private static TextureTile idle_image = new TextureTile("blocks/air.png");
 
+        private TextureTile UpdateCurrentImage()
+        {
+            return idle_image;
+        }
 
         public Block(BlockGrid grid)
         {

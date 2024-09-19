@@ -10,10 +10,10 @@ namespace SpaceGame2D.enviroment.species
 {
     public class Human: ISpecies
     {
-        public string standing_image => "species/human/standing.png";
-        
+
+        public TextureTile standing_image => _standing_image;
+        private static TextureTile _standing_image = new TextureTile("species/human/standing.png");
         public Human() {
-            Atlas.AddToQue(new Texture(standing_image));
             
         }
 

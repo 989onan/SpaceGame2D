@@ -10,11 +10,11 @@ namespace SpaceGame2D.enviroment.species
 {
     public class Avali: ISpecies
     {
-        public string standing_image => "species/avali/standing.png";
+        public TextureTile standing_image => _standing_image;
+        private static TextureTile _standing_image = new TextureTile("species/avali/standing.png");
 
         public Avali()
         {
-            Atlas.AddToQue(new Texture(standing_image));
 
         }
 

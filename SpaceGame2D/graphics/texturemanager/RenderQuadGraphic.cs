@@ -61,20 +61,40 @@ namespace SpaceGame2D.graphics.texturemanager
             GL.DeleteVertexArray(ElementBufferObject);
         }
 
-        public bool DrawImage(float zoom, Vector2 offset)
+        public bool DrawImage(float zoom, Vector2 offset, float window_height, float window_width)
         {
+            float WindowRatio;
+            if (window_width > window_height)
+            {
+                WindowRatio = window_width / window_height;
+            }
+            else
+            {
+                WindowRatio = window_height / window_width;
+            }
+            AABB position = AABB.Size_To_AABB(this.graphicObject.position, this.graphicObject.graphic_size);
 
-            AABB position = AABB.Size_To_AABB(this.graphicObject.position, this.graphicObject.size);
-
-
-            //get position of object, and also find graphic position on atlas.
+            //Console.WriteLine(this.graphicObject.currentTexture.width);
             float[] vertices = {
-                (position.x_min + offset.X) * zoom, (position.y_max + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x, this.graphicObject.currentTexture.y,  // lower-left corner  
-                (position.x_min + offset.X) * zoom, (position.y_min + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x, this.graphicObject.currentTexture.height + this.graphicObject.currentTexture.y,  // top-left corner
-                (position.x_max + offset.X) * zoom, (position.y_min + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x + this.graphicObject.currentTexture.width, this.graphicObject.currentTexture.height + this.graphicObject.currentTexture.y,   // top-right corner
-                (position.x_max + offset.X) * zoom, (position.y_max + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x + this.graphicObject.currentTexture.width, this.graphicObject.currentTexture.y  // lower-right corner
+                (position.x_min + offset.X) * zoom, ((position.y_max * WindowRatio) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x, this.graphicObject.currentTexture.y,  // lower-left corner  
+                (position.x_min + offset.X) * zoom, ((position.y_min * WindowRatio) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x, this.graphicObject.currentTexture.height + this.graphicObject.currentTexture.y,  // top-left corner
+                (position.x_max + offset.X) * zoom, ((position.y_min * WindowRatio) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x + this.graphicObject.currentTexture.width, this.graphicObject.currentTexture.height + this.graphicObject.currentTexture.y,   // top-right corner
+                (position.x_max + offset.X) * zoom, ((position.y_max * WindowRatio) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x + this.graphicObject.currentTexture.width, this.graphicObject.currentTexture.y  // lower-right corner
                 
             };
+            //get position of object, and also find graphic position on atlas.
+            if (window_height > window_width)
+            {
+                //Console.WriteLine("fire!");
+                vertices = new float[]{
+                    ((position.x_min * WindowRatio) + offset.X) * zoom, ((position.y_max) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x, this.graphicObject.currentTexture.y,  // lower-left corner  
+                    ((position.x_min * WindowRatio) + offset.X) * zoom, ((position.y_min) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x, this.graphicObject.currentTexture.height + this.graphicObject.currentTexture.y,  // top-left corner
+                    ((position.x_max * WindowRatio) + offset.X) * zoom, ((position.y_min) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x + this.graphicObject.currentTexture.width, this.graphicObject.currentTexture.height + this.graphicObject.currentTexture.y,   // top-right corner
+                    ((position.x_max * WindowRatio) + offset.X) * zoom, ((position.y_max) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x + this.graphicObject.currentTexture.width, this.graphicObject.currentTexture.y  // lower-right corner
+                
+                };
+            }
+            
 
             /*vertices = new float[]{
                 (position.x_min + offset.X) * zoom, (position.y_max + offset.Y) * zoom, 0.0f, 0f, 0f,  // lower-left corner  

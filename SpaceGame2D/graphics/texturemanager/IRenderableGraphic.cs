@@ -16,7 +16,7 @@ namespace SpaceGame2D.graphics.texturemanager
 
         void DisposeGraphic();
 
-        bool DrawImage(float zoom, Vector2 offset);
+        bool DrawImage(float zoom, Vector2 offset, float window_height, float window_width);
 
     }
 }

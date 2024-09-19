@@ -11,7 +11,7 @@ namespace SpaceGame2D.graphics.texturemanager
     {
 
         Vector2 position { get;}
-        Vector2 size { get; }
+        Vector2 graphic_size { get; }
 
         TextureTile currentTexture { get; }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpaceGame2D.graphics.texturemanager;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,6 @@ namespace SpaceGame2D.enviroment.species
 {
     public interface ISpecies
     {
-        string standing_image {  get; }
+        TextureTile standing_image {  get; }
     }
 }

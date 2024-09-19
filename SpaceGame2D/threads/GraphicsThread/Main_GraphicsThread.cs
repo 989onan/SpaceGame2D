@@ -20,13 +20,16 @@ namespace SpaceGame2D.threads.GraphicsThread
     {
         public GameWindow Window { get; set; }
 
-        private bool is_running;
+        public bool is_running { get; private set; }
 
         private DateTime last_time;
 
         public float Zoom { get; set; }
 
         private int seconds_recognized;
+
+        public float window_width { get; private set; }
+        public float window_height { get; private set; }
 
         public readonly MainThread source_thread;
 
@@ -36,7 +39,7 @@ namespace SpaceGame2D.threads.GraphicsThread
         {
             this.Window = new GameWindow(new GameWindowSettings(), new NativeWindowSettings());
             
-            this.is_running = true;
+            
             this.source_thread = source_thread;
 
 
@@ -63,12 +66,14 @@ namespace SpaceGame2D.threads.GraphicsThread
         private void OnLoad()
         {
             ShaderManager.LoadAll();
-            Texture null_texture = new Texture("null.png");
-            Atlas.AddToQue(null_texture);
+            TextureTile null_texture = new TextureTile("null.png");
             Atlas.RegenerateAtlas();
             Atlas.LoadToGPU();
             Atlas.UseImage();
             GraphicsRegistry.LoadAll();
+            this.is_running = true;
+            this.window_height = Window.Size.Y;
+            this.window_width = Window.Size.X;
         }
 
         public void Stop()
@@ -81,6 +86,9 @@ namespace SpaceGame2D.threads.GraphicsThread
         private void OnFramebufferResize(FramebufferResizeEventArgs e)
         {
             GL.Viewport(0, 0, e.Width, e.Height);
+
+            this.window_height = e.Height;
+            this.window_width = e.Width;
         }
 
 
@@ -90,6 +98,7 @@ namespace SpaceGame2D.threads.GraphicsThread
             DateTime now = DateTime.Now;
             
             GL.Clear(ClearBufferMask.ColorBufferBit);
+            
 
             if ((now - this.source_thread.gamestart).TotalSeconds > seconds_recognized)
             {
@@ -99,7 +108,7 @@ namespace SpaceGame2D.threads.GraphicsThread
 
             foreach (IRenderableGraphic obj in GraphicsRegistry.getAll())
             {
-                obj.DrawImage(Zoom, new System.Numerics.Vector2(0, 0));
+                obj.DrawImage(Zoom, new System.Numerics.Vector2(0, 0), this.window_height, this.window_width);
             }
 
 

@@ -56,7 +56,12 @@ namespace SpaceGame2D.threads
 
             main_thread = new Thread(new ThreadStart(() =>
             {
-                Thread.Sleep(1000);
+                this.is_running = true;
+                if (!this.graphics_thread.is_running)
+                {
+                    Thread.Sleep(1);
+                }
+                
                 while (this.is_running)
                 {
                     iterate();
@@ -71,7 +76,7 @@ namespace SpaceGame2D.threads
 
 
 
-            this.is_running = true;
+            
             main_thread.Start();
             Console.WriteLine("boot initalized!");
 

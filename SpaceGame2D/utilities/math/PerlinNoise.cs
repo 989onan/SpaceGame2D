@@ -67,11 +67,18 @@ namespace SpaceGame2D.utilities.math
             InitGradients();
         }
 
+        /// <summary>
+        /// The main noise function. Looks up the pseudorandom gradients at the nearest
+        /// lattice points, dots them with the input vector, and interpolates the
+        /// results to produce a single output value in [0, 1] range. 
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        /// <returns></returns>
         public double Noise(double x, double y, double z)
         {
-            /* The main noise function. Looks up the pseudorandom gradients at the nearest
-                lattice points, dots them with the input vector, and interpolates the
-                results to produce a single output value in [0, 1] range. */
+            
 
             int ix = (int)Math.Floor(x);
             double fx0 = x - ix;

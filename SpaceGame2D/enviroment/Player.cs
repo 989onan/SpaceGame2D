@@ -25,8 +25,8 @@ namespace SpaceGame2D.enviroment
 
         public Vector2 velocity { get; set; }
 
-        public Vector2 position { get => Collider.Center; set => Collider.Center = value; }
-
+        public Vector2 position_physics { get => Collider.Center; set => Collider.Center = value; }
+        
         public Vector2 GraphicCenterPosition { get => new Vector2(player_position.X, player_position.Y+(graphic_size.Y/2)); }
 
         public ISpecies species;
@@ -43,7 +43,7 @@ namespace SpaceGame2D.enviroment
 
             Collider = AABB.Size_To_AABB(position, new Vector2(.8f, 2));
             this.graphic_size = new Vector2(1f,2f);
-            this.position = position;
+            this.position_physics = position;
             this.species = species;
 
 
@@ -53,24 +53,8 @@ namespace SpaceGame2D.enviroment
         }
         public bool OnGround { get; set; }
 
-        private Vector2 internal_new_velocity = new Vector2(0,0);
-
-        private void SetInternal(Vector2 value)
-        {
-            if(internal_new_velocity == Vector2.Zero)
-            {
-                internal_new_velocity = value;
-            }
-        }
-
-
-        public Vector2 newVelocityImpulse { get => internal_new_velocity; set => SetInternal(value); }
 
         public void DisposeGraphic()
-        {
-
-        }
-        ~Player()
         {
             GraphicsRegistry.deregisterRenderGraphic(this.graphic);
         }

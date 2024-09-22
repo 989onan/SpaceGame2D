@@ -12,13 +12,13 @@ using System.Numerics;
 
 namespace SpaceGame2D.enviroment.blocks
 {
-    public class AirBlock : IBlock
+    internal class Ore_Copper: IBlock
     {
-        public string idle_image => "blocks/air.png";
-        public AirBlock(BlockGrid grid, Point position)
+
+        public string idle_image => "blocks/ore_copper.png";
+        public Ore_Copper(BlockGrid grid, Point position)
         {
             default_init(grid, position);
-            Main_PhysicsThread.static_physics_objects.Remove(this);
         }
 
 

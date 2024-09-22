@@ -1,5 +1,6 @@
 ﻿
 using SpaceGame2D.enviroment.physics;
+using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.utilities.math;
 using SpaceGame2D.utilities.threading;
 using System;
@@ -34,7 +35,7 @@ namespace SpaceGame2D.threads.PhysicsThread
         public Main_PhysicsThread(MainThread source_thread)
         {
 
-            int millisecond_clock = 10;
+            int millisecond_clock = 5;
 
             this.main_thread = new Thread(new ThreadStart( () =>
             {
@@ -54,7 +55,7 @@ namespace SpaceGame2D.threads.PhysicsThread
                     //an infinitely fast clock would be, I have to restrict it to running at maxiumum 100 times a second to prevent issues.
                     float delta_times_secs = (float)((now - last_time).TotalSeconds);
                     //Console.WriteLine("Delta time:" + ((int)float.Round(millisecond_clock - delta_times_secs)).ToString());
-                    Thread.Sleep((int)float.Round(millisecond_clock - (delta_times_secs*2)));
+                    Thread.Sleep((int)float.Round(millisecond_clock - delta_times_secs));
                     
                     
                 }
@@ -88,6 +89,7 @@ namespace SpaceGame2D.threads.PhysicsThread
             {
                 AABB velocity_aabb = new AABB(activePhysicsObject.Collider);
 
+                Vector2 new_positon = activePhysicsObject.position_physics;
 
                 //activePhysicsObject.velocity += activePhysicsObject.newVelocityImpulse;
                 //activePhysicsObject.newVelocityImpulse = Vector2.Zero;
@@ -131,14 +133,18 @@ namespace SpaceGame2D.threads.PhysicsThread
 
                 }
                 Vector2 normal = new Vector2(0, 0);
+                Vector2 prevnormal = new Vector2(0, 0);
                 orderedPhysics.Sort();
                 //orderedPhysics.Reverse();
                 int iterations = 0;
                 foreach(OrderedPhysicsPlace sorted_item in orderedPhysics)
                 {
                     IStaticPhysicsObject staticColliderClosest = sorted_item.obj;
-                    
-                    Tuple<float, Vector2> result = SweptAABB(activePhysicsObject.Collider, staticColliderClosest.Collider, physicsSpeedReducedVelocity);
+
+                    AABB active_collider = new AABB(activePhysicsObject.Collider);
+                    active_collider.Center = new_positon;
+
+                    Tuple<float, Vector2> result = SweptAABB(active_collider, staticColliderClosest.Collider, physicsSpeedReducedVelocity);
                     float collisiontime = result.Item1;
                     normal = result.Item2;
                     if (!activePhysicsObject.OnGround)
@@ -148,39 +154,57 @@ namespace SpaceGame2D.threads.PhysicsThread
                     if (staticColliderClosest.Collider.Intercects(activePhysicsObject.Collider))
                     {
                         Vector2 diff = staticColliderClosest.Collider.PushOutOfMe(activePhysicsObject.Collider);
-                        activePhysicsObject.position += diff;
+                        new_positon += diff;
                     }
                     if (collisiontime == 1f)
                     {
                         continue;
+                    }
+                    if (iterations > 1)
+                    {
+                        if(normal == prevnormal) continue;
                     }
                     //if (remainingtime < .01f) remainingtime = 1f;
                     
                     float remainingtime = 1.0f - collisiontime;
                     //double magnitude = Math.Sqrt((physicsSpeedReducedVelocity.X * physicsSpeedReducedVelocity.X + physicsSpeedReducedVelocity.Y * physicsSpeedReducedVelocity.Y)) * remainingtime;
 
-                    activePhysicsObject.position += physicsSpeedReducedVelocity * collisiontime;
+                    new_positon += physicsSpeedReducedVelocity * collisiontime;
 
-                    float dotprod = (physicsSpeedReducedVelocity.X * normal.Y + physicsSpeedReducedVelocity.Y * normal.X) * remainingtime;
+                    //float magnitude = (float)Math.Sqrt((physicsSpeedReducedVelocity.X * physicsSpeedReducedVelocity.X + physicsSpeedReducedVelocity.Y * physicsSpeedReducedVelocity.Y)) * remainingtime;
+                    //float dotprod = physicsSpeedReducedVelocity.X * normal.Y + physicsSpeedReducedVelocity.Y * normal.X;
 
                     
+
+                    //physicsSpeedReducedVelocity.X = dotprod * normal.Y * magnitude;
+                    //physicsSpeedReducedVelocity.Y = dotprod * normal.X * magnitude;
+
+                    float dotprod = (physicsSpeedReducedVelocity.X * normal.Y + physicsSpeedReducedVelocity.Y * normal.X) * remainingtime;
+                    //if (dotprod > 0.0f) dotprod = 1.0f;
+                    //else if (dotprod < 0.0f) dotprod = -1.0f;
+
                     physicsSpeedReducedVelocity = new Vector2((float)(dotprod * normal.Y), (float)(dotprod * normal.X));
-                    activePhysicsObject.position += physicsSpeedReducedVelocity;
+                    new_positon += physicsSpeedReducedVelocity;
 
                     
 
 
                     iterations++;//last
-                    //break;
+                    if(iterations < 1)
+                    {
+                        prevnormal = normal;
+                    }
                 }
 
                 if (iterations < 1)
                 {
-                    activePhysicsObject.position += physicsSpeedReducedVelocity;
+                    new_positon += physicsSpeedReducedVelocity;
                 }
+                
                 activePhysicsObject.velocity = physicsSpeedReducedVelocity / delta_times_secs;
                 activePhysicsObject.velocity += delta_times_secs * gravity;
-                
+
+                activePhysicsObject.position_physics = new_positon;
 
                 // physicsSpeedReducedVelocity;
 
@@ -282,7 +306,7 @@ namespace SpaceGame2D.threads.PhysicsThread
 
 
 
-            if (entryTime > exitTime) return new Tuple<float, Vector2>(1, normal); // This check was correct.
+            /*if (entryTime > exitTime) return new Tuple<float, Vector2>(1, normal); // This check was correct.
             if (Entry.X < 0.0f && Entry.Y < 0.0f) return new Tuple<float, Vector2>(1, normal);
             if (Entry.X < 0.0f)
             {
@@ -292,6 +316,10 @@ namespace SpaceGame2D.threads.PhysicsThread
             {
                 // Check that the bounding box started overlapped or not.
                 if (original_obj.y_max < collider.y_min || original_obj.y_min > collider.y_max) return new Tuple<float, Vector2>(1, normal);
+            }*/
+            if (entryTime > exitTime || Entry.X < 0.0f && Entry.Y < 0.0f || Entry.X > 1.0f || Entry.Y > 1.0f)
+            {
+                return new Tuple<float, Vector2>(1, normal);
             }
             else // if there was a collision 
             {

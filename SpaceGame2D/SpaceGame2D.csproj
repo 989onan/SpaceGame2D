@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="graphics\textures\blocks\" />
+    <Folder Include="enviroment\universe\" />
   </ItemGroup>
 
 

@@ -14,7 +14,7 @@ namespace SpaceGame2D.enviroment.species
         public string standing_image => "species/avali/standing.png";
 
         public float jump_velocity => 7f;
-        public float walk_speed => 3f;
+        public float walk_speed => 20f;
         public Avali()
         {
             Console.WriteLine("create avali");

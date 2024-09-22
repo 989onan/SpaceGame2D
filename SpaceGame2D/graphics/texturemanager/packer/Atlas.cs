@@ -86,10 +86,14 @@ namespace SpaceGame2D.graphics.texturemanager.packer
 
         public static void RegenerateAtlas()
         {
-            Console.WriteLine("regenerating atlas!");
+            //Console.WriteLine("regenerating atlas!");
             foreach (string filepath in Directory.GetFiles(Path.Join(BootStrapper.path, "graphics/textures/"), "*.*", SearchOption.AllDirectories))
             {
                 string filepath_real = filepath.Split("graphics/textures/")[1];
+                if (!(filepath_real.Replace("\\", "/").EndsWith(".png") || filepath_real.Replace("\\", "/").EndsWith(".bmp") || filepath_real.Replace("\\", "/").EndsWith(".tga") || filepath_real.Replace("\\", "/").EndsWith(".tiff")))
+                {
+                    continue;
+                }
                 TextureTile texture = Atlas.AddToAtlas(filepath_real.Replace("\\","/"));
             }
             foreach (TextureTile tile in _Tiles.Values)

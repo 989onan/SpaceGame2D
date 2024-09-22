@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpaceGame2D.enviroment.physics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -10,7 +11,7 @@ namespace SpaceGame2D.graphics.texturemanager
     public interface IRenderableObject
     {
 
-        //Vector2 position { get;}
+
         Vector2 graphic_size { get; }
 
         Vector2 GraphicCenterPosition { get; }

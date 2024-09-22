@@ -45,16 +45,18 @@ namespace SpaceGame2D.threads
             this.graphics_thread = new Main_GraphicsThread(this);
             this.graphics_thread.Window.Unload += Stop;
             //player = new Player(new Vector2(-1f, 1.1f), SpeciesRegistry.getSpecies("SpaceGame2D:Human"));
-            player = new Player(new Vector2(0,2), SpeciesRegistry.getSpecies("SpaceGame2D:Avali"));
+            //TODO: Remove these!
+            player = new Player(new Vector2(0,20), SpeciesRegistry.getSpecies("SpaceGame2D:Avali"));
 
-            cur_world = new Planet("avalon", new Point(200, 200), new Vector2(0, -9.8f));
-            new WorldGenerator(99, cur_world.BlockGrid);
+            cur_world = new Planet("Earth", new Point(200, 200), new Vector2(0, -9.8f));
+            new WorldGenerator(99, cur_world.BlockGrid).generate();
+
 
             cur_world.BlockGrid.RenderOffset = new Vector2(-1, -1f);
             //player2 = new Player(new Vector2(1f,0f), Avali.instance);
 
 
-            //TODO: Remove these!
+            
             /*Human instance = Human.Instance;
             IWorld spawn_planet = new Planet(universes[0], new Size(1, 1), new Vector2(0, -9.8f), "Avalon_Beta");
 

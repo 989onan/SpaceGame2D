@@ -11,7 +11,7 @@ namespace SpaceGame2D.enviroment.physics
     public interface IStaticPhysicsObject
     {
 
-        Vector2 position { get;}
+        Vector2 position_physics { get;}
 
         AABB Collider { get; }
 

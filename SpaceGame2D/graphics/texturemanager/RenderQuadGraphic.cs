@@ -74,12 +74,12 @@ namespace SpaceGame2D.graphics.texturemanager
             }
             AABB position = AABB.Size_To_AABB(this.graphicObject.GraphicCenterPosition, this.graphicObject.graphic_size);
 
-            
 
-            
+
+
 
             //offset *= zoom;
-
+            AABB screen = new AABB(new Vector2(-1.2f, -1.2f), new Vector2(1.2f, 1.2f));
             //Console.WriteLine(this.graphicObject.UpdateCurrentImage().width);
             float[] vertices;
             //get position of object, and also find graphic position on atlas.
@@ -93,7 +93,7 @@ namespace SpaceGame2D.graphics.texturemanager
                 graphic_on_screen.x_max = ((position.x_max + offset.X) * WindowRatio) * zoom;
 
 
-                if (!graphic_on_screen.Intercects(new AABB(new Vector2(-1, -1), new Vector2(1, 1))))
+                if (!graphic_on_screen.Intercects(screen))
                 {
                     return false;
                 }
@@ -115,7 +115,7 @@ namespace SpaceGame2D.graphics.texturemanager
                 graphic_on_screen.x_min = (position.x_min + offset.X) * zoom;
                 graphic_on_screen.x_max = (position.x_max + offset.X) * zoom;
 
-                if (!graphic_on_screen.Intercects(new AABB(new Vector2(-1, -1), new Vector2(1, 1))))
+                if (!graphic_on_screen.Intercects(screen))
                 {
                     return false;
                 }

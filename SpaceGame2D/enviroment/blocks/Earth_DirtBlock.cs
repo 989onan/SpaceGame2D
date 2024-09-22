@@ -12,17 +12,16 @@ using System.Numerics;
 
 namespace SpaceGame2D.enviroment.blocks
 {
-    public class AirBlock : IBlock
+    internal class Earth_DirtBlock: IBlock
     {
-        public string idle_image => "blocks/air.png";
-        public AirBlock(BlockGrid grid, Point position)
+
+        public string idle_image => "blocks/dirt.png";
+
+
+        public Earth_DirtBlock(BlockGrid grid, Point position)
         {
             default_init(grid, position);
-            Main_PhysicsThread.static_physics_objects.Remove(this);
         }
-
-
-
         /// <summary>
         /// everything from here till "Stop" needs to be copy pasted to every block type because interface bullshit. - @989onan
         /// </summary>

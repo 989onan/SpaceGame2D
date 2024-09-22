@@ -16,7 +16,6 @@ using SpaceGame2D.graphics.texturemanager.packer;
 using SpaceGame2D.enviroment.species;
 using SpaceGame2D.enviroment.blocks;
 using System.Numerics;
-using OpenTK.Mathematics;
 
 namespace SpaceGame2D.threads.GraphicsThread
 {
@@ -60,7 +59,7 @@ namespace SpaceGame2D.threads.GraphicsThread
             this.Window.FramebufferResize += OnFramebufferResize;
             this.Window.Load += OnLoad;
             this.Window.Unload += OnDispose;
-            this.Window.Size += new Vector2i(800, 800);
+            this.Window.Size += new OpenTK.Mathematics.Vector2i(800, 800);
 
             //register shaders
             ShaderManager.register("SpaceGame2D:default", new Shader("graphics/shaders/default.vert", "graphics/shaders/default.frag"));
@@ -129,14 +128,16 @@ namespace SpaceGame2D.threads.GraphicsThread
                 seconds_recognized = (int)(now - this.source_thread.gamestart).TotalSeconds + 1;
                 Console.WriteLine("second passed on graphics thread. seconds:" + seconds_recognized.ToString());
                 Console.WriteLine("FPS:" + (1/deltatime).ToString());
-
             }
+
             //Console.WriteLine("tick");
             //GL.C
-
+            Vector2 physics_pos = this.source_thread.player.position_physics;
             foreach (IRenderableGraphic obj in GraphicsRegistry.getAll())
             {
-                obj.DrawImage(Zoom, new System.Numerics.Vector2(-this.source_thread.player.position.X, -this.source_thread.player.position.Y), this.window_height, this.window_width);
+                //iterate through all blocks that need to be rendered.
+
+                obj.DrawImage(Zoom, -physics_pos, this.window_height, this.window_width);
             }
 
 

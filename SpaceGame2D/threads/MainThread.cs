@@ -10,6 +10,10 @@ using System.Numerics;
 using SpaceGame2D.threads.PhysicsThread;
 using SpaceGame2D.threads.GraphicsThread;
 using SpaceGame2D.enviroment.species;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using SpaceGame2D.enviroment.blocks;
+using SpaceGame2D.enviroment.world;
 
 namespace SpaceGame2D.threads
 {
@@ -25,19 +29,28 @@ namespace SpaceGame2D.threads
 
         public readonly DateTime gamestart;
 
-        private bool is_running;
+        public bool is_running { get; private set; }
 
         public Player player;
-        //public Player player2;
+        public Player player2;
 
+        public IWorld cur_world;
 
         public MainThread()
         {
             this.gamestart = DateTime.Now;
+
+            SpeciesRegistry.GenerateList();
             
             this.graphics_thread = new Main_GraphicsThread(this);
             this.graphics_thread.Window.Unload += Stop;
-            player = new Player(Vector2.Zero, Human.instance);
+            //player = new Player(new Vector2(-1f, 1.1f), SpeciesRegistry.getSpecies("SpaceGame2D:Human"));
+            player = new Player(new Vector2(0,2), SpeciesRegistry.getSpecies("SpaceGame2D:Avali"));
+
+            cur_world = new Planet("avalon", new Point(200, 200), new Vector2(0, -9.8f));
+            new WorldGenerator(99, cur_world.BlockGrid);
+
+            cur_world.BlockGrid.RenderOffset = new Vector2(-1, -1f);
             //player2 = new Player(new Vector2(1f,0f), Avali.instance);
 
 
@@ -54,14 +67,16 @@ namespace SpaceGame2D.threads
             cur_world = spawn_planet;*/
 
 
+
+
             main_thread = new Thread(new ThreadStart(() =>
             {
-                this.is_running = true;
+                
                 if (!this.graphics_thread.is_running)
                 {
                     Thread.Sleep(1);
                 }
-                
+                this.is_running = true;
                 while (this.is_running)
                 {
                     iterate();
@@ -83,6 +98,45 @@ namespace SpaceGame2D.threads
 
             
             this.graphics_thread.Window.Run();//run last.
+        }
+
+        public void KeyPressed(KeyboardKeyEventArgs e)
+        {
+            if (e.Key == Keys.D)
+            {
+                player.velocity = new Vector2(1f * player.species.walk_speed, player.velocity.Y);
+            }
+            if (e.Key == Keys.A)
+            {
+                player.velocity = new Vector2(-1f * player.species.walk_speed, player.velocity.Y);
+            }
+            if(e.Key == Keys.Space)
+            {
+                if (player.OnGround)
+                {
+                    player.velocity = new Vector2(player.velocity.X, player.species.jump_velocity);
+                }
+                else
+                {
+                    Console.WriteLine("failed ground check");
+                }
+            }
+            //Console.WriteLine("pressed key.");
+            
+        }
+
+        public void KeyReleased(KeyboardKeyEventArgs e)
+        {
+            if (e.Key == Keys.D)
+            {
+                player.velocity = new Vector2(0f, player.velocity.Y);
+            }
+            if (e.Key == Keys.A)
+            {
+                player.velocity = new Vector2(0f, player.velocity.Y);
+            }
+            //Console.WriteLine("pressed key.");
+
         }
 
         public void Stop()
@@ -110,7 +164,7 @@ namespace SpaceGame2D.threads
             }
             else
             {
-                this.graphics_thread.Zoom = (float)(totaltime * .01);
+                //this.graphics_thread.Zoom = (float)(totaltime * .01);
             }
 
         }

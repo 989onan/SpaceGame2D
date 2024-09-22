@@ -39,8 +39,9 @@ namespace SpaceGame2D.graphics.texturemanager
             this.image = ImageResult.FromStream(File.OpenRead(Path.Join(BootStrapper.path, "graphics/textures/" + texture_path)), ColorComponents.RedGreenBlueAlpha);
             this.path = texture_path;
             this.IsLoaded = false;
-            Atlas.AddToList(this);
+
         }
+
 
 
 

@@ -4,9 +4,11 @@ using StbImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -29,6 +31,8 @@ namespace SpaceGame2D.graphics.texturemanager.packer
         public static byte[] texture => _internal_texture;
 
         private static byte[] _internal_texture = new byte[0];
+
+        public static bool isLoaded { get; private set; }
 
         public Atlas()
         {
@@ -53,19 +57,50 @@ namespace SpaceGame2D.graphics.texturemanager.packer
             GL.BindTexture(TextureTarget.Texture2D, Handle);
         }
 
-        public static TextureTile AddToList(TextureTile texture) {
-            _Tiles.TryAdd(texture.path, texture);
-            return _Tiles.GetValueOrDefault(texture.path);
+        public static TextureTile AddToAtlas(string path) {
+            isLoaded = false;
+            if (_Tiles.ContainsKey(path))
+            {
+                return _Tiles.GetValueOrDefault(path);
+            }
+            else
+            {
+                _Tiles.TryAdd(path, new TextureTile(path));
+                return _Tiles.GetValueOrDefault(path);
+            }
+
+            
+        }
+
+        public static TextureTile getTexture(string path)
+        {
+            if (Atlas.Tiles.ContainsKey(path))
+            {
+                return Atlas.Tiles.GetValueOrDefault(path);
+            }
+            else
+            {
+                return Atlas.Tiles.GetValueOrDefault("null.png");
+            }
         }
 
         public static void RegenerateAtlas()
         {
             Console.WriteLine("regenerating atlas!");
+            foreach (string filepath in Directory.GetFiles(Path.Join(BootStrapper.path, "graphics/textures/"), "*.*", SearchOption.AllDirectories))
+            {
+                string filepath_real = filepath.Split("graphics/textures/")[1];
+                TextureTile texture = Atlas.AddToAtlas(filepath_real.Replace("\\","/"));
+            }
             foreach (TextureTile tile in _Tiles.Values)
             {
                 tile.Deload();
             }
+            
             BinPacker regenerator = new BinPacker();
+
+
+            
 
             regenerator.fit();
 
@@ -83,7 +118,7 @@ namespace SpaceGame2D.graphics.texturemanager.packer
             }
 
             Console.WriteLine("atlas regenerated!");
-            
+            isLoaded = true;
         }
 
 

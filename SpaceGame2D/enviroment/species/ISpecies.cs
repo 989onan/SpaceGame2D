@@ -9,6 +9,12 @@ namespace SpaceGame2D.enviroment.species
 {
     public interface ISpecies
     {
-        TextureTile standing_image {  get; }
+        string standing_image {  get; }
+
+        float walk_speed { get; }
+
+        float jump_velocity { get; }
+
+        void LoadSpecies(Dictionary<string, ISpecies> speciesList); //this can be called more than once.
     }
 }

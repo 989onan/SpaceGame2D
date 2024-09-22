@@ -15,8 +15,7 @@ namespace SpaceGame2D.enviroment.physics
 
         AABB Collider { get; }
 
-
-
+        
 
         bool HasCollision { get; set; }
     }

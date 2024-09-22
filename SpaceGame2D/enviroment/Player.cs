@@ -2,6 +2,7 @@
 using SpaceGame2D.enviroment.species;
 using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.graphics.texturemanager.packer;
+using SpaceGame2D.threads.PhysicsThread;
 using SpaceGame2D.utilities.math;
 using System;
 using System.Collections.Generic;
@@ -26,28 +27,44 @@ namespace SpaceGame2D.enviroment
 
         public Vector2 position { get => Collider.Center; set => Collider.Center = value; }
 
+        public Vector2 GraphicCenterPosition { get => new Vector2(player_position.X, player_position.Y+(graphic_size.Y/2)); }
+
         public ISpecies species;
 
 
         public Vector2 graphic_size { get; private set; }
 
         public AABB Collider { get; }
-        IRenderableGraphic graphic;
+        public IRenderableGraphic graphic { get; private set; }
 
-        public TextureTile currentTexture { get => UpdateCurrentImage();  }
         public bool HasCollision { get; set; }
 
         public Player(Vector2 position, ISpecies species) {
 
-            Collider = AABB.Size_To_AABB(new Vector2(0, 0), new Vector2(1, 2));
-            this.graphic_size = new Vector2(1.2f,1.2f);
+            Collider = AABB.Size_To_AABB(position, new Vector2(.8f, 2));
+            this.graphic_size = new Vector2(1f,2f);
             this.position = position;
             this.species = species;
 
 
             this.graphic = new RenderQuadGraphic(this, "SpaceGame2D:default");
+            Main_PhysicsThread.active_physics_objects.Add(this);
+            OnGround = true;
+        }
+        public bool OnGround { get; set; }
+
+        private Vector2 internal_new_velocity = new Vector2(0,0);
+
+        private void SetInternal(Vector2 value)
+        {
+            if(internal_new_velocity == Vector2.Zero)
+            {
+                internal_new_velocity = value;
+            }
         }
 
+
+        public Vector2 newVelocityImpulse { get => internal_new_velocity; set => SetInternal(value); }
 
         public void DisposeGraphic()
         {
@@ -60,7 +77,7 @@ namespace SpaceGame2D.enviroment
 
         public TextureTile UpdateCurrentImage()
         {
-            return species.standing_image;
+            return Atlas.getTexture(species.standing_image);
         }
     }
 }

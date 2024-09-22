@@ -13,6 +13,10 @@ using System.Reflection.Metadata;
 using SpaceGame2D.graphics.compiledshaders;
 using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.graphics.texturemanager.packer;
+using SpaceGame2D.enviroment.species;
+using SpaceGame2D.enviroment.blocks;
+using System.Numerics;
+using OpenTK.Mathematics;
 
 namespace SpaceGame2D.threads.GraphicsThread
 {
@@ -34,6 +38,10 @@ namespace SpaceGame2D.threads.GraphicsThread
         public readonly MainThread source_thread;
 
         public Shader default_shader;
+
+        public delegate void RegisterImage();
+
+        public static event RegisterImage RegisterImages;
         //this needs to be run last when making threads.
         public Main_GraphicsThread(MainThread source_thread)
         {
@@ -45,12 +53,14 @@ namespace SpaceGame2D.threads.GraphicsThread
 
             //Console.WriteLine(GL.GetProgramInfoLog(default_shader));
 
-            this.Zoom = 1f;
+            this.Zoom = .1f;
             this.Window.RenderFrame += Render;
+            this.Window.KeyDown += source_thread.KeyPressed;
+            this.Window.KeyUp += source_thread.KeyReleased;
             this.Window.FramebufferResize += OnFramebufferResize;
             this.Window.Load += OnLoad;
             this.Window.Unload += OnDispose;
-
+            this.Window.Size += new Vector2i(800, 800);
 
             //register shaders
             ShaderManager.register("SpaceGame2D:default", new Shader("graphics/shaders/default.vert", "graphics/shaders/default.frag"));
@@ -62,11 +72,19 @@ namespace SpaceGame2D.threads.GraphicsThread
             
         }
 
+        protected virtual void RaiseLoadImageEvent()
+        {
+            // Raise the event in a thread-safe manner using the ?. operator.
+            RegisterImages?.Invoke();
+        }
+
 
         private void OnLoad()
         {
             ShaderManager.LoadAll();
-            TextureTile null_texture = new TextureTile("null.png");
+            RaiseLoadImageEvent();
+            
+
             Atlas.RegenerateAtlas();
             Atlas.LoadToGPU();
             Atlas.UseImage();
@@ -74,6 +92,8 @@ namespace SpaceGame2D.threads.GraphicsThread
             this.is_running = true;
             this.window_height = Window.Size.Y;
             this.window_width = Window.Size.X;
+            //GL.MatrixMode(MatrixMode.Modelview);
+            
         }
 
         public void Stop()
@@ -98,21 +118,26 @@ namespace SpaceGame2D.threads.GraphicsThread
             DateTime now = DateTime.Now;
             
             GL.Clear(ClearBufferMask.ColorBufferBit);
-            
+
+
+            double deltatime = (now - this.last_time).TotalSeconds;
+
+
 
             if ((now - this.source_thread.gamestart).TotalSeconds > seconds_recognized)
             {
-                seconds_recognized++;
+                seconds_recognized = (int)(now - this.source_thread.gamestart).TotalSeconds + 1;
                 Console.WriteLine("second passed on graphics thread. seconds:" + seconds_recognized.ToString());
+                Console.WriteLine("FPS:" + (1/deltatime).ToString());
+
             }
+            //Console.WriteLine("tick");
+            //GL.C
 
             foreach (IRenderableGraphic obj in GraphicsRegistry.getAll())
             {
-                obj.DrawImage(Zoom, new System.Numerics.Vector2(0, 0), this.window_height, this.window_width);
+                obj.DrawImage(Zoom, new System.Numerics.Vector2(-this.source_thread.player.position.X, -this.source_thread.player.position.Y), this.window_height, this.window_width);
             }
-
-
-
 
 
 

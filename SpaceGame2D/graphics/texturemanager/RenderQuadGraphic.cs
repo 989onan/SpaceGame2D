@@ -15,7 +15,7 @@ namespace SpaceGame2D.graphics.texturemanager
     {
         private IShader shader;
 
-        public TextureTile image => this.graphicObject.currentTexture;
+        public TextureTile image => this.graphicObject.UpdateCurrentImage();
 
         private int VertexArrayObject;
         private int ElementBufferObject;
@@ -72,37 +72,73 @@ namespace SpaceGame2D.graphics.texturemanager
             {
                 WindowRatio = window_height / window_width;
             }
-            AABB position = AABB.Size_To_AABB(this.graphicObject.position, this.graphicObject.graphic_size);
+            AABB position = AABB.Size_To_AABB(this.graphicObject.GraphicCenterPosition, this.graphicObject.graphic_size);
 
-            //Console.WriteLine(this.graphicObject.currentTexture.width);
-            float[] vertices = {
-                (position.x_min + offset.X) * zoom, ((position.y_max * WindowRatio) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x, this.graphicObject.currentTexture.y,  // lower-left corner  
-                (position.x_min + offset.X) * zoom, ((position.y_min * WindowRatio) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x, this.graphicObject.currentTexture.height + this.graphicObject.currentTexture.y,  // top-left corner
-                (position.x_max + offset.X) * zoom, ((position.y_min * WindowRatio) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x + this.graphicObject.currentTexture.width, this.graphicObject.currentTexture.height + this.graphicObject.currentTexture.y,   // top-right corner
-                (position.x_max + offset.X) * zoom, ((position.y_max * WindowRatio) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x + this.graphicObject.currentTexture.width, this.graphicObject.currentTexture.y  // lower-right corner
-                
-            };
+            
+
+            
+
+            //offset *= zoom;
+
+            //Console.WriteLine(this.graphicObject.UpdateCurrentImage().width);
+            float[] vertices;
             //get position of object, and also find graphic position on atlas.
             if (window_height > window_width)
             {
+                AABB graphic_on_screen = new AABB(position);
+                
+                graphic_on_screen.y_max = ((position.y_max + offset.Y) * zoom);
+                graphic_on_screen.y_min = ((position.y_min + offset.Y) * zoom);
+                graphic_on_screen.x_min = ((position.x_min + offset.X) * WindowRatio) * zoom;
+                graphic_on_screen.x_max = ((position.x_max + offset.X) * WindowRatio) * zoom;
+
+
+                if (!graphic_on_screen.Intercects(new AABB(new Vector2(-1, -1), new Vector2(1, 1))))
+                {
+                    return false;
+                }
+
+                offset.Y *= WindowRatio;
                 //Console.WriteLine("fire!");
                 vertices = new float[]{
-                    ((position.x_min * WindowRatio) + offset.X) * zoom, ((position.y_max) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x, this.graphicObject.currentTexture.y,  // lower-left corner  
-                    ((position.x_min * WindowRatio) + offset.X) * zoom, ((position.y_min) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x, this.graphicObject.currentTexture.height + this.graphicObject.currentTexture.y,  // top-left corner
-                    ((position.x_max * WindowRatio) + offset.X) * zoom, ((position.y_min) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x + this.graphicObject.currentTexture.width, this.graphicObject.currentTexture.height + this.graphicObject.currentTexture.y,   // top-right corner
-                    ((position.x_max * WindowRatio) + offset.X) * zoom, ((position.y_max) + offset.Y) * zoom, 0.0f, this.graphicObject.currentTexture.x + this.graphicObject.currentTexture.width, this.graphicObject.currentTexture.y  // lower-right corner
-                
+                    graphic_on_screen.x_min, graphic_on_screen.y_max, 0.0f, this.graphicObject.UpdateCurrentImage().x, this.graphicObject.UpdateCurrentImage().y,  // lower-left corner  
+                    graphic_on_screen.x_min, graphic_on_screen.y_min, 0.0f, this.graphicObject.UpdateCurrentImage().x, this.graphicObject.UpdateCurrentImage().height + this.graphicObject.UpdateCurrentImage().y,  // top-left corner
+                    graphic_on_screen.x_max, graphic_on_screen.y_min, 0.0f, this.graphicObject.UpdateCurrentImage().x + this.graphicObject.UpdateCurrentImage().width, this.graphicObject.UpdateCurrentImage().height + this.graphicObject.UpdateCurrentImage().y,   // top-right corner
+                    graphic_on_screen.x_max, graphic_on_screen.y_max, 0.0f, this.graphicObject.UpdateCurrentImage().x + this.graphicObject.UpdateCurrentImage().width, this.graphicObject.UpdateCurrentImage().y  // lower-right corner
+                };
+            }
+            else
+            {
+                AABB graphic_on_screen = new AABB(position);
+                graphic_on_screen.y_max = ((position.y_max + offset.Y) * WindowRatio) * zoom;
+                graphic_on_screen.y_min = ((position.y_min + offset.Y) * WindowRatio) * zoom;
+                graphic_on_screen.x_min = (position.x_min + offset.X) * zoom;
+                graphic_on_screen.x_max = (position.x_max + offset.X) * zoom;
+
+                if (!graphic_on_screen.Intercects(new AABB(new Vector2(-1, -1), new Vector2(1, 1))))
+                {
+                    return false;
+                }
+                offset.X *= WindowRatio;
+                //
+                vertices = new float[]{
+                    graphic_on_screen.x_min, graphic_on_screen.y_max, 0.0f, this.graphicObject.UpdateCurrentImage().x, this.graphicObject.UpdateCurrentImage().y,  // lower-left corner  
+                    graphic_on_screen.x_min, graphic_on_screen.y_min, 0.0f, this.graphicObject.UpdateCurrentImage().x, this.graphicObject.UpdateCurrentImage().height + this.graphicObject.UpdateCurrentImage().y,  // top-left corner
+                    graphic_on_screen.x_max, graphic_on_screen.y_min, 0.0f, this.graphicObject.UpdateCurrentImage().x + this.graphicObject.UpdateCurrentImage().width, this.graphicObject.UpdateCurrentImage().height + this.graphicObject.UpdateCurrentImage().y,   // top-right corner
+                    graphic_on_screen.x_max, graphic_on_screen.y_max, 0.0f, this.graphicObject.UpdateCurrentImage().x + this.graphicObject.UpdateCurrentImage().width, this.graphicObject.UpdateCurrentImage().y  // lower-right corner
                 };
             }
             
 
-            /*vertices = new float[]{
+            /*float[] vertices = new float[]{
                 (position.x_min + offset.X) * zoom, (position.y_max + offset.Y) * zoom, 0.0f, 0f, 0f,  // lower-left corner  
                 (position.x_min + offset.X) * zoom, (position.y_min + offset.Y) * zoom, 0.0f, 0f, 1.0f,  // top-left corner
                 (position.x_max + offset.X) * zoom, (position.y_min + offset.Y) * zoom, 0.0f, 1.0f, 1.0f,   // top-right corner
                 (position.x_max + offset.X) * zoom, (position.y_max + offset.Y) * zoom, 0.0f, 1.0f, 0f  // lower-right corner
                 
             };*/
+
+            if (!Atlas.isLoaded) return false;
             this.shader.Use();
             Atlas.UseImage();
 

@@ -10,10 +10,13 @@ namespace SpaceGame2D.graphics.texturemanager
     public interface IRenderableObject
     {
 
-        Vector2 position { get;}
+        //Vector2 position { get;}
         Vector2 graphic_size { get; }
 
-        TextureTile currentTexture { get; }
+        Vector2 GraphicCenterPosition { get; }
+
+        TextureTile UpdateCurrentImage();
+        IRenderableGraphic graphic { get; }
 
     }
 }

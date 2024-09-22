@@ -14,6 +14,10 @@ namespace SpaceGame2D.enviroment.physics
         bool IsActive { get; set; }
         new Vector2 position { get; set; }
 
+        Vector2 newVelocityImpulse { get; set; }
+
+        public bool OnGround { get; set; }
+
         Vector2 velocity { get; set; }
 
 

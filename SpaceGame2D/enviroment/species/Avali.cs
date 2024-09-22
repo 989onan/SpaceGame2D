@@ -10,14 +10,26 @@ namespace SpaceGame2D.enviroment.species
 {
     public class Avali: ISpecies
     {
-        public TextureTile standing_image => _standing_image;
-        private static TextureTile _standing_image = new TextureTile("species/avali/standing.png");
 
+        public string standing_image => "species/avali/standing.png";
+
+        public float jump_velocity => 7f;
+        public float walk_speed => 3f;
         public Avali()
         {
+            Console.WriteLine("create avali");
+
 
         }
 
-        public static Avali instance = new Avali();
+        public TextureTile GetCurrentImage()
+        {
+            return Atlas.getTexture(standing_image);
+        }
+
+        public void LoadSpecies(Dictionary<string, ISpecies> speciesList)
+        {
+            speciesList.Add("SpaceGame2D:Avali", new Avali());
+        }
     }
 }

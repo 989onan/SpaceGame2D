@@ -1,5 +1,12 @@
 ﻿
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using SpaceGame2D.enviroment;
+using SpaceGame2D.enviroment.blocks;
 using SpaceGame2D.enviroment.physics;
+using SpaceGame2D.enviroment.species;
+using SpaceGame2D.enviroment.world;
 using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.utilities.math;
 using SpaceGame2D.utilities.threading;
@@ -8,6 +15,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,28 +27,27 @@ namespace SpaceGame2D.threads.PhysicsThread
     public class Main_PhysicsThread
     {
 
-        public Thread main_thread;
-
-        public readonly MainThread source_thread;
+        public Task main_thread;
 
         private bool is_running;
-
-        public Vector2 gravity = new Vector2(0f, -9.8f);
 
         public static ConcurrentList<IActivePhysicsObject> active_physics_objects = new ConcurrentList<IActivePhysicsObject>();
         public static ConcurrentList<IStaticPhysicsObject> static_physics_objects = new ConcurrentList<IStaticPhysicsObject>();
 
         private DateTime last_time;
 
-        public Main_PhysicsThread(MainThread source_thread)
+        public Main_PhysicsThread()
         {
 
-            int millisecond_clock = 5;
+            int millisecond_clock = 10;
 
-            this.main_thread = new Thread(new ThreadStart( () =>
+
+
+
+            this.main_thread = new Task(async () =>
             {
                 this.is_running = true;
-                if (!this.source_thread.is_running)
+                if (!MainThread.Instance.is_running)
                 {
                     Thread.Sleep(1);
                 }
@@ -48,23 +55,23 @@ namespace SpaceGame2D.threads.PhysicsThread
                 while (this.is_running)
                 {
                     DateTime now = DateTime.Now;
-                    iterate();
+                    await iterate();
                     last_time = DateTime.Now;
 
                     //I wish I could have atomic physics, but because of floating point error and how fast
                     //an infinitely fast clock would be, I have to restrict it to running at maxiumum 100 times a second to prevent issues.
-                    float delta_times_secs = (float)((now - last_time).TotalSeconds);
+                    float delta_times_secs = (float)((now - last_time).TotalMilliseconds);
                     //Console.WriteLine("Delta time:" + ((int)float.Round(millisecond_clock - delta_times_secs)).ToString());
-                    Thread.Sleep((int)float.Round(millisecond_clock - delta_times_secs));
+
+                    await Task.Delay((int)float.Round(millisecond_clock - delta_times_secs));
                     
                     
                 }
             }
-            ));
+            );
             this.is_running = true;
 
             this.main_thread.Start();
-            this.source_thread = source_thread;
         }
 
 
@@ -73,154 +80,254 @@ namespace SpaceGame2D.threads.PhysicsThread
             this.is_running = false;
         }
 
+
+        public DateTime last_break { get; private set; }
+        public void ControlPlayer(float delta_times_secs, DateTime now)
+        {
+            GameWindow window = MainThread.Instance.graphics_thread.Window;
+            Vector2 vel = MainThread.Instance.player.velocity;
+            ISpecies species = MainThread.Instance.player.species;
+            if (window.IsKeyDown(Keys.D))
+            {
+                vel = new Vector2(species.walk_speed, vel.Y);
+            }
+            if (window.IsKeyDown(Keys.A))
+            {
+                vel = new Vector2(-species.walk_speed, vel.Y);
+            }
+            if (!(window.IsKeyDown(Keys.D) || window.IsKeyDown(Keys.A)))
+            {
+                vel = new Vector2(vel.X / MainThread.Instance.cur_world.enviro.air_resistance_factor, vel.Y);
+            }
+            if (window.IsKeyDown(Keys.Space))
+            {
+                if (MainThread.Instance.player.ground != null && MainThread.Instance.player.ground.HasCollision == true)
+                {
+                    vel = new Vector2(vel.X, species.jump_velocity);
+                }
+                else
+                {
+                    //Console.WriteLine("failed ground check");
+                }
+            }
+            if (window.IsKeyDown(Keys.E))
+            {
+                MainThread.Instance.player.storageScreen.IsVisible = true;
+            }
+            else
+            {
+                MainThread.Instance.player.storageScreen.CloseGui();
+
+            }
+
+            float WindowRatio;
+
+            Vector2 MouseCenter = new Vector2(((window.MousePosition.X - (window.Size.X / 2)) / (window.Size.X / 2)), -1.2f * ((window.MousePosition.Y - (window.Size.Y / 2)) / (window.Size.Y)));
+
+            if (window.Size.X > window.Size.Y)
+            {
+                WindowRatio = window.Size.X / window.Size.Y;
+                //MouseCenter = new Vector2(((window.MousePosition.X / window.Size.X) - .5f) * 2, ((window.MousePosition.Y / -window.Size.Y) + .5f) * 2);
+            }
+            else
+            {
+                //WindowRatio = window.Size.Y / window.Size.X;
+            }
+
+            if (window.Size.X > window.Size.Y)
+            {
+
+
+            }
+            else
+            {
+
+            }
+            //TODO: Mouse needs to be normalized based on it's position from center of screen, when coords represent the top left instead.
+            //I think it's the top left at least - @989onan
+
+            List<IStaticPhysicsObject> iblocks = static_physics_objects.FindAll(o => o is IBlock);
+
+            float meters_reach_to_screen = species.reach_meters;
+
+
+            Vector2 MouseClamped = new Vector2(Math.Clamp((MouseCenter / MainThread.Instance.graphics_thread.Zoom).X, -meters_reach_to_screen, meters_reach_to_screen), Math.Clamp((MouseCenter / MainThread.Instance.graphics_thread.Zoom).Y, -meters_reach_to_screen, meters_reach_to_screen));
+
+            MainThread.Instance.graphics_thread.PhysicalMousePosition = MouseClamped + MainThread.Instance.player.position_physics;
+
+            List<IStaticPhysicsObject> collection = new AABB(MainThread.Instance.player.Collider).ExtendByVector(MouseClamped)
+                        .CollectAABBIntercectingMe(iblocks);
+            //Console.WriteLine(MainThread.Instance.graphics_thread.RealMousePosition.X.ToString() + "," + MainThread.Instance.graphics_thread.RealMousePosition.Y.ToString());
+            List<OrderedPlace<Tuple<IStaticPhysicsObject, Vector2>>> ray_interection = AABB.GetRayIntercectionAndNormal(new Vector4(
+                MainThread.Instance.player.position_physics.X,
+                MainThread.Instance.player.position_physics.Y,
+                MainThread.Instance.graphics_thread.PhysicalMousePosition.X,
+                MainThread.Instance.graphics_thread.PhysicalMousePosition.Y),
+                    collection);
+            //Console.WriteLine(collection.Count());
+            ray_interection.Sort();
+            //Console.WriteLine(ray_interection.Count());
+            if (ray_interection.Count() > 0)
+            {
+
+                MainThread.Instance.selectedCube.target_block = (ray_interection.First().obj.Item1 as IBlock);
+                //Console.WriteLine(MainThread.Instance.selectedCube.target_block.block_position.ToString());
+            }
+            else
+            {
+                MainThread.Instance.selectedCube.target_block = null;
+                MainThread.Instance.selectedCube.alt_position = MainThread.Instance.graphics_thread.PhysicalMousePosition;
+            }
+
+
+            MainThread.Instance.player.velocity = vel;
+
+
+            if(MainThread.Instance.selectedCube.target_block != null)
+            {
+                if ((now-last_break).TotalSeconds > .8f)
+                {
+                    if (window.IsMouseButtonDown(MouseButton.Button1))
+                    {
+                        IBlock block = MainThread.Instance.selectedCube.target_block;
+                        BlockGrid grid = block.grid;
+                        block.Mine();
+                        grid.deleteTileLocation(block.block_position);
+                        //last_break = now;
+                    }
+                }
+                
+            }
+            
+        }
+
         private int seconds_recognized;
 
 
-        private void iterate()
+
+
+        private async Task iterate()
         {
             DateTime now = DateTime.Now;
 
             float delta_times_secs = (float)((now-last_time).TotalSeconds);
 
-            //this.source_thread.cur_grid.RenderOffset = new Vector2(this.source_thread.cur_grid.RenderOffset.X, (this.source_thread.cur_grid.RenderOffset.Y)+ (delta_times_secs* .1f));
-
+            //MainThread.Instance.cur_grid.RenderOffset = new Vector2(MainThread.Instance.cur_grid.RenderOffset.X, (MainThread.Instance.cur_grid.RenderOffset.Y)+ (delta_times_secs* .1f));
+            ControlPlayer(delta_times_secs, now);
             //meat and butter of everything. does all object collision detection and speed reductions.
-            foreach (IActivePhysicsObject activePhysicsObject in active_physics_objects)
+            List<IStaticPhysicsObject> staticPhysicsObjects = active_physics_objects.Where(o => !o.IsActive).Select(o => o as IStaticPhysicsObject).ToList();
+            staticPhysicsObjects.AddRange(static_physics_objects);
+            //Console.WriteLine(staticPhysicsObjects.Count().ToString());
+
+            List<Task> physics_obj_threads = new List<Task>();
+
+            active_physics_objects.ForEach(obj => physics_obj_threads.Add(
+                Task.Run(async () =>
+                {
+
+                    //if (!obj.IsActive)
+                    //{
+                    //    obj.velocity = Vector2.Zero;
+                    //    return;
+                    //}
+                    AABB velocity_aabb = new AABB(obj.Collider);
+
+                    Vector2 new_positon = obj.position_physics;
+                    Vector2 physicsSpeedReducedVelocity = (obj.velocity) * delta_times_secs;
+
+                    List<IStaticPhysicsObject> static_physics_potential = velocity_aabb.ExtendByVector(physicsSpeedReducedVelocity).CollectAABBIntercectingMe(staticPhysicsObjects);
+
+                    List<OrderedPlace<IStaticPhysicsObject>> orderedPhysics = new List<OrderedPlace<IStaticPhysicsObject>>();
+
+
+
+                    List<Task> Static_calcs = new List<Task>();
+                    //float remainingtime = 0;
+                    foreach (IStaticPhysicsObject staticPhysicsObject in static_physics_potential.Where(o=>o != null))
+                    {
+                        Static_calcs.Add(Task.Run(() =>
+                        {
+                            Tuple<float, Vector2> result = AABB.SweptAABB(obj.Collider, staticPhysicsObject.Collider, physicsSpeedReducedVelocity);
+                            //Console.WriteLine("has potential");
+
+                            //if (remainingtime < .01f) remainingtime = 1f;
+                            orderedPhysics.Add(new OrderedPlace<IStaticPhysicsObject>(result.Item1, staticPhysicsObject));
+                        }));
+                    }
+                    await Task.WhenAll(Static_calcs.ToArray());
+                    orderedPhysics.Sort();
+                    obj.ground = null;
+                    foreach (OrderedPlace<IStaticPhysicsObject> sorted_item in orderedPhysics)
+                    {
+                        IStaticPhysicsObject staticColliderClosest = sorted_item.obj;
+
+                        AABB active_collider = new AABB(obj.Collider);
+                        active_collider.Center = new_positon;
+
+                        Tuple<float, Vector2> result = AABB.SweptAABB(active_collider, staticColliderClosest.Collider, physicsSpeedReducedVelocity);
+                        float collisiontime = result.Item1;
+                        Vector2 normal = result.Item2;
+                        if (obj.ground == null)
+                        {
+                            if (normal.Y == -1f)
+                            {
+                                obj.ground = sorted_item.obj;
+                            }
+
+                        }
+                        if (staticColliderClosest.Collider.Intercects(obj.Collider))
+                        {
+                            Vector2 diff = staticColliderClosest.Collider.PushOutOfMe(obj.Collider);
+                            new_positon += diff;
+                        }
+                        if (result.Item1 >= 1.0f)
+                        {
+                            continue;
+                        }
+
+                        float remainingtime = 1.0f - collisiontime;
+
+                        new_positon += physicsSpeedReducedVelocity * collisiontime;
+
+
+                        float dotprod = (physicsSpeedReducedVelocity.X * normal.Y + physicsSpeedReducedVelocity.Y * normal.X) * remainingtime;
+
+                        physicsSpeedReducedVelocity = new Vector2((float)(dotprod * normal.Y), (float)(dotprod * normal.X));
+                        new_positon += physicsSpeedReducedVelocity;
+
+
+                        if (staticColliderClosest.Collider.Intercects(obj.Collider))
+                        {
+                            Vector2 diff = staticColliderClosest.Collider.PushOutOfMe(obj.Collider);
+                            new_positon += diff;
+                        }
+                        staticColliderClosest.TriggerCollideEvent(obj, normal);
+                    }
+
+                    if (orderedPhysics.Count() < 1)
+                    {
+                        new_positon += physicsSpeedReducedVelocity;
+                    }
+
+                    obj.velocity = physicsSpeedReducedVelocity / delta_times_secs;
+                    obj.velocity += delta_times_secs * MainThread.Instance.cur_world.enviro.gravity;
+
+                    obj.position_physics = new_positon;
+                }))
+            );
+
+
+            //Console.WriteLine("awaiting");
+            await Task.WhenAll(physics_obj_threads.ToArray());
+            //Console.WriteLine("awaiting finished");
+
+
+
+            if ((now - MainThread.Instance.gamestart).TotalSeconds > seconds_recognized)
             {
-                AABB velocity_aabb = new AABB(activePhysicsObject.Collider);
-
-                Vector2 new_positon = activePhysicsObject.position_physics;
-
-                //activePhysicsObject.velocity += activePhysicsObject.newVelocityImpulse;
-                //activePhysicsObject.newVelocityImpulse = Vector2.Zero;
-                Vector2 physicsSpeedReducedVelocity = (activePhysicsObject.velocity) * delta_times_secs;
-                //Vector2 retain_velocity = new Vector2(1, 1);
-
-                velocity_aabb.ExtendByVector(physicsSpeedReducedVelocity);
-
-                IStaticPhysicsObject[] static_physics_potential = new IStaticPhysicsObject[static_physics_objects.Count()];
-                int position = 0;
-
-                foreach(IStaticPhysicsObject staticPhysicsObject in static_physics_objects) //so we're doing less calculations.
-                {
-                    //Console.WriteLine("we have a static object.");
-                    if (staticPhysicsObject.Collider.Intercects(velocity_aabb))
-                    {
-                        
-                        static_physics_potential[position] = staticPhysicsObject;
-                        position++;
-                    }
-                }
-
-                
-
-                List<OrderedPhysicsPlace> orderedPhysics = new List<OrderedPhysicsPlace>();
-                
-
-                activePhysicsObject.OnGround = false;
-                //float remainingtime = 0;
-                foreach (IStaticPhysicsObject staticPhysicsObject in static_physics_potential)
-                {
-                    if(staticPhysicsObject == null)
-                    {
-                        break;
-                    }
-                    Tuple<float, Vector2> result = SweptAABB(activePhysicsObject.Collider, staticPhysicsObject.Collider, physicsSpeedReducedVelocity);
-                    //Console.WriteLine("has potential");
-
-                    //if (remainingtime < .01f) remainingtime = 1f;
-                    orderedPhysics.Add(new OrderedPhysicsPlace(result.Item1, staticPhysicsObject));
-
-                }
-                Vector2 normal = new Vector2(0, 0);
-                Vector2 prevnormal = new Vector2(0, 0);
-                orderedPhysics.Sort();
-                //orderedPhysics.Reverse();
-                int iterations = 0;
-                foreach(OrderedPhysicsPlace sorted_item in orderedPhysics)
-                {
-                    IStaticPhysicsObject staticColliderClosest = sorted_item.obj;
-
-                    AABB active_collider = new AABB(activePhysicsObject.Collider);
-                    active_collider.Center = new_positon;
-
-                    Tuple<float, Vector2> result = SweptAABB(active_collider, staticColliderClosest.Collider, physicsSpeedReducedVelocity);
-                    float collisiontime = result.Item1;
-                    normal = result.Item2;
-                    if (!activePhysicsObject.OnGround)
-                    {
-                        activePhysicsObject.OnGround = normal.Y == -1f;
-                    }
-                    if (staticColliderClosest.Collider.Intercects(activePhysicsObject.Collider))
-                    {
-                        Vector2 diff = staticColliderClosest.Collider.PushOutOfMe(activePhysicsObject.Collider);
-                        new_positon += diff;
-                    }
-                    if (collisiontime == 1f)
-                    {
-                        continue;
-                    }
-                    if (iterations > 1)
-                    {
-                        if(normal == prevnormal) continue;
-                    }
-                    //if (remainingtime < .01f) remainingtime = 1f;
-                    
-                    float remainingtime = 1.0f - collisiontime;
-                    //double magnitude = Math.Sqrt((physicsSpeedReducedVelocity.X * physicsSpeedReducedVelocity.X + physicsSpeedReducedVelocity.Y * physicsSpeedReducedVelocity.Y)) * remainingtime;
-
-                    new_positon += physicsSpeedReducedVelocity * collisiontime;
-
-                    //float magnitude = (float)Math.Sqrt((physicsSpeedReducedVelocity.X * physicsSpeedReducedVelocity.X + physicsSpeedReducedVelocity.Y * physicsSpeedReducedVelocity.Y)) * remainingtime;
-                    //float dotprod = physicsSpeedReducedVelocity.X * normal.Y + physicsSpeedReducedVelocity.Y * normal.X;
-
-                    
-
-                    //physicsSpeedReducedVelocity.X = dotprod * normal.Y * magnitude;
-                    //physicsSpeedReducedVelocity.Y = dotprod * normal.X * magnitude;
-
-                    float dotprod = (physicsSpeedReducedVelocity.X * normal.Y + physicsSpeedReducedVelocity.Y * normal.X) * remainingtime;
-                    //if (dotprod > 0.0f) dotprod = 1.0f;
-                    //else if (dotprod < 0.0f) dotprod = -1.0f;
-
-                    physicsSpeedReducedVelocity = new Vector2((float)(dotprod * normal.Y), (float)(dotprod * normal.X));
-                    new_positon += physicsSpeedReducedVelocity;
-
-                    
-
-
-                    iterations++;//last
-                    if(iterations < 1)
-                    {
-                        prevnormal = normal;
-                    }
-                }
-
-                if (iterations < 1)
-                {
-                    new_positon += physicsSpeedReducedVelocity;
-                }
-                
-                activePhysicsObject.velocity = physicsSpeedReducedVelocity / delta_times_secs;
-                activePhysicsObject.velocity += delta_times_secs * gravity;
-
-                activePhysicsObject.position_physics = new_positon;
-
-                // physicsSpeedReducedVelocity;
-
-                //physicsSpeedReducedVelocity / delta_times_secs;
-
-                //Console.WriteLine(physicsSpeedReducedVelocity.ToString());
-
-
-            }
-
-
-            if ((now - this.source_thread.gamestart).TotalSeconds > seconds_recognized)
-            {
-                seconds_recognized = (int)(now - this.source_thread.gamestart).TotalSeconds + 1;
-                Console.WriteLine("second passed on physics thread. seconds:" + seconds_recognized.ToString());
-                Console.WriteLine("FPS physics:" + (1 / delta_times_secs).ToString());
+                seconds_recognized = (int)(now - MainThread.Instance.gamestart).TotalSeconds + 1;
+                //Console.WriteLine("second passed on physics thread. seconds:" + seconds_recognized.ToString());
+                //Console.WriteLine("FPS physics:" + (1 / delta_times_secs).ToString());
 
             }
 
@@ -229,131 +336,9 @@ namespace SpaceGame2D.threads.PhysicsThread
 
         }
 
-        private class OrderedPhysicsPlace : IComparable<OrderedPhysicsPlace>
-        {
-            public IStaticPhysicsObject obj;
-            public float collide_time;
-            public OrderedPhysicsPlace(float collide_time, IStaticPhysicsObject obj)
-            {
-                this.obj = obj;
-                this.collide_time = collide_time;
+        
 
-            }
-            public int CompareTo(OrderedPhysicsPlace other)
-            {
-                return collide_time.CompareTo(other.collide_time);
-            }
-        }
-
-        public Tuple<float, Vector2> SweptAABB(AABB original_obj, AABB collider, Vector2 Velocity_dir)
-        {
-            Vector2 InvEntry = new Vector2(0, 0);
-            Vector2 InvExit = new Vector2(0, 0);
-
-            // find the distance between the objects on the near and far sides for both x and y 
-            if (Velocity_dir.X > 0.0f)
-            {
-                InvEntry.X = collider.x_min - original_obj.x_max;
-                InvExit.X = collider.x_max - original_obj.x_min;
-            }
-            else
-            {
-                InvEntry.X = collider.x_max - original_obj.x_min;
-                InvExit.X = collider.x_min - original_obj.x_max;
-            }
-
-            if (Velocity_dir.Y > 0.0f)
-            {
-                InvEntry.Y = collider.y_min - original_obj.y_max;
-                InvExit.Y = collider.y_max - original_obj.y_min;
-            }
-            else
-            {
-                InvEntry.Y = collider.y_max - original_obj.y_min;
-                InvExit.Y = collider.y_min - original_obj.y_max;
-            }
-
-
-            Vector2 Entry;
-            Vector2 Exit;
-
-            if (Velocity_dir.X == 0.0f)
-            {
-                Entry.X = float.NegativeInfinity;
-                Exit.X = float.PositiveInfinity;
-            }
-            else
-            {
-                Entry.X = InvEntry.X / Velocity_dir.X;
-                Exit.X = InvExit.X / Velocity_dir.X;
-            }
-
-            if (Velocity_dir.Y == 0.0f)
-            {
-                Entry.Y = float.NegativeInfinity;
-                Exit.Y = float.PositiveInfinity;
-            }
-            else
-            {
-                Entry.Y = InvEntry.Y / Velocity_dir.Y;
-                Exit.Y = InvExit.Y / Velocity_dir.Y;
-            }
-
-            float entryTime = Math.Max(Entry.X, Entry.Y);
-            float exitTime = Math.Min(Exit.X, Exit.Y);
-
-            Vector2 normal = new Vector2(0, 0);
-
-
-
-            /*if (entryTime > exitTime) return new Tuple<float, Vector2>(1, normal); // This check was correct.
-            if (Entry.X < 0.0f && Entry.Y < 0.0f) return new Tuple<float, Vector2>(1, normal);
-            if (Entry.X < 0.0f)
-            {
-                if (original_obj.x_max < collider.x_min || original_obj.x_min > collider.x_max) return new Tuple<float, Vector2>(1, normal);
-            }
-            if (Entry.Y < 0.0f)
-            {
-                // Check that the bounding box started overlapped or not.
-                if (original_obj.y_max < collider.y_min || original_obj.y_min > collider.y_max) return new Tuple<float, Vector2>(1, normal);
-            }*/
-            if (entryTime > exitTime || Entry.X < 0.0f && Entry.Y < 0.0f || Entry.X > 1.0f || Entry.Y > 1.0f)
-            {
-                return new Tuple<float, Vector2>(1, normal);
-            }
-            else // if there was a collision 
-            {
-                // calculate normal of collided surface
-                if (Entry.X > Entry.Y)
-                {
-                    if (InvEntry.X < 0.0f)
-                    {
-                        normal.X = 1.0f;
-                        normal.Y = 0.0f;
-                    }
-                    else
-                    {
-                        normal.X = -1.0f;
-                        normal.Y = 0.0f;
-                    }
-                }
-                else
-                {
-                    if (InvEntry.Y < 0.0f)
-                    {
-                        normal.X = 0.0f;
-                        normal.Y = 1.0f;
-                    }
-                    else
-                    {
-                        normal.X = 0.0f;
-                        normal.Y = -1.0f;
-                    }
-                } // return the time of collisionreturn entryTime; 
-            }
-
-            return new Tuple<float, Vector2>(entryTime, normal);
-        }
+        
 
 
         //My poor attempts at collision code.

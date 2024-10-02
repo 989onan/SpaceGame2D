@@ -12,11 +12,10 @@ namespace SpaceGame2D.enviroment.world
     {
         string Name { get; }
         BlockGrid BlockGrid { get; }
+
         
         bool isPlanet { get; }
 
-        Vector2 gravity { get; }
-
-
+        WorldEnviromentProperties enviro { get;}
     }
 }

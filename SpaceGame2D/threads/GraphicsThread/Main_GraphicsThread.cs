@@ -16,6 +16,7 @@ using SpaceGame2D.graphics.texturemanager.packer;
 using SpaceGame2D.enviroment.species;
 using SpaceGame2D.enviroment.blocks;
 using System.Numerics;
+using SpaceGame2D.graphics.renderables;
 
 namespace SpaceGame2D.threads.GraphicsThread
 {
@@ -27,14 +28,13 @@ namespace SpaceGame2D.threads.GraphicsThread
 
         private DateTime last_time;
 
+        public Vector2 PhysicalMousePosition { get; set; }
         public float Zoom { get; set; }
 
         private int seconds_recognized;
 
-        public float window_width { get; private set; }
-        public float window_height { get; private set; }
+        public Vector2 window_size { get; private set; }
 
-        public readonly MainThread source_thread;
 
         public Shader default_shader;
 
@@ -42,24 +42,22 @@ namespace SpaceGame2D.threads.GraphicsThread
 
         public static event RegisterImage RegisterImages;
         //this needs to be run last when making threads.
-        public Main_GraphicsThread(MainThread source_thread)
+        public Main_GraphicsThread()
         {
             this.Window = new GameWindow(new GameWindowSettings(), new NativeWindowSettings());
             
             
-            this.source_thread = source_thread;
 
 
             //Console.WriteLine(GL.GetProgramInfoLog(default_shader));
 
-            this.Zoom = .1f;
+            this.Zoom = .08f;
             this.Window.RenderFrame += Render;
-            this.Window.KeyDown += source_thread.KeyPressed;
-            this.Window.KeyUp += source_thread.KeyReleased;
+            
             this.Window.FramebufferResize += OnFramebufferResize;
             this.Window.Load += OnLoad;
             this.Window.Unload += OnDispose;
-            this.Window.Size += new OpenTK.Mathematics.Vector2i(800, 800);
+            this.Window.Size = new OpenTK.Mathematics.Vector2i(800, 800);
 
             //register shaders
             ShaderManager.register("SpaceGame2D:default", new Shader("graphics/shaders/default.vert", "graphics/shaders/default.frag"));
@@ -67,7 +65,7 @@ namespace SpaceGame2D.threads.GraphicsThread
 
         private void OnDispose()
         {
-            
+            GraphicsRegistry.DisposeBuffers();
             
         }
 
@@ -82,16 +80,19 @@ namespace SpaceGame2D.threads.GraphicsThread
         {
             ShaderManager.LoadAll();
             RaiseLoadImageEvent();
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.Enable(EnableCap.Blend);
+            //GL.Enable(EnableCap.Texture2D);
+            //GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
             
-
             Atlas.RegenerateAtlas();
             Atlas.LoadToGPU();
             Atlas.UseImage();
-            GraphicsRegistry.LoadAll();
+            GraphicsRegistry.LoadBuffers();
             this.is_running = true;
-            this.window_height = Window.Size.Y;
-            this.window_width = Window.Size.X;
-            //GL.MatrixMode(MatrixMode.Modelview);
+            window_size = new Vector2(Window.Size.X, Window.Size.Y);
+            GL.Viewport(0, 0, Window.Size.X, Window.Size.Y);
             
         }
 
@@ -104,42 +105,54 @@ namespace SpaceGame2D.threads.GraphicsThread
 
         private void OnFramebufferResize(FramebufferResizeEventArgs e)
         {
-            GL.Viewport(0, 0, e.Width, e.Height);
+            GL.Viewport(0, 0, Window.Size.X, Window.Size.Y);
 
-            this.window_height = e.Height;
-            this.window_width = e.Width;
+            window_size = new Vector2(Window.Size.X, Window.Size.Y);
         }
 
 
         private void Render(FrameEventArgs e)
         {
-            
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            GL.ClearColor(142f/225f, 202f/255f,1f,1f);
+            //GL.Disable(EnableCap.DepthTest);
             DateTime now = DateTime.Now;
             
-            GL.Clear(ClearBufferMask.ColorBufferBit);
+            //GL.Clear(ClearBufferMask.ColorBufferBit);
 
 
             double deltatime = (now - this.last_time).TotalSeconds;
 
 
 
-            if ((now - this.source_thread.gamestart).TotalSeconds > seconds_recognized)
+            if ((now - MainThread.Instance.gamestart).TotalSeconds > seconds_recognized)
             {
-                seconds_recognized = (int)(now - this.source_thread.gamestart).TotalSeconds + 1;
-                Console.WriteLine("second passed on graphics thread. seconds:" + seconds_recognized.ToString());
-                Console.WriteLine("FPS:" + (1/deltatime).ToString());
+                seconds_recognized = (int)(now - MainThread.Instance.gamestart).TotalSeconds + 1;
+                //Console.WriteLine("second passed on graphics thread. seconds:" + seconds_recognized.ToString());
+                //Console.WriteLine("FPS:" + (1/deltatime).ToString());
             }
 
             //Console.WriteLine("tick");
             //GL.C
-            Vector2 physics_pos = this.source_thread.player.position_physics;
-            foreach (IRenderableGraphic obj in GraphicsRegistry.getAll())
+
+            Vector2 physics_pos = MainThread.Instance.player.position_physics;
+
+            float animation_time = (float)(now-MainThread.Instance.gamestart).TotalSeconds*100;
+
+            foreach (IRenderableWorldGraphic obj in GraphicsRegistry.getAllWorldGraphics())
             {
                 //iterate through all blocks that need to be rendered.
-
-                obj.DrawImage(Zoom, -physics_pos, this.window_height, this.window_width);
+                if(obj == null) continue;
+                obj.DrawImage(Zoom, -physics_pos, this.window_size, animation_time);
+                
             }
 
+            MainThread.Instance.selectedCube.DrawImage(Zoom, -physics_pos, this.window_size, animation_time);
+            foreach (IRenderable obj in GraphicsRegistry.getAllRenderGraphics())
+            {
+                //iterate through all blocks that need to be rendered.
+                obj.Draw(animation_time, this.window_size);
+            }
 
 
             this.Window.SwapBuffers();

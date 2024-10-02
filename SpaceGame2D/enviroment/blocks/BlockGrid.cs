@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpaceGame2D.utilities.math;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -44,13 +45,44 @@ namespace SpaceGame2D.enviroment.blocks
             return new Point(-1, -1);
         }
 
-        public void moveTileLocation(IBlock tile, Point value)
+        public IBlock getTileAt(Point position)
         {
-            if (_blocks[value.X, value.Y] != null)
+            return _blocks[position.X%size.X, position.Y%size.Y];
+        }
+
+        public IBlock getTileAt(int x, int y)
+        {
+            return _blocks[x % size.X, y % size.Y];
+        }
+
+        public List<IBlock> gatherArea(Point Min, Point Max)
+        {
+            Point trueMin = new Point(Math.Min(Min.X, Max.X), Math.Min(Min.Y, Max.Y));
+            Point trueMax = new Point(Math.Max(Min.X, Max.X), Math.Max(Min.Y, Max.Y));
+
+            List<IBlock> blocks = new List<IBlock>();
+            for (int i = trueMin.X; i < trueMax.X; i++)
             {
-                _blocks[value.X, value.Y].destruct();
-                _blocks[value.X, value.Y] = new AirBlock(this, value);
+                for(int j = trueMin.Y; j < trueMax.Y; j++)
+                {
+                    blocks.Add(getTileAt(i,j));
+                }
             }
+            return blocks;
+        }
+
+        public List<IBlock> getAxies(Point position, int distance = 1, Direction directions = Direction.Up | Direction.Down | Direction.Right | Direction.Left)
+        {
+            List<IBlock> blocks = new List<IBlock>();
+
+            
+
+            for(int i = 0; i < distance; i++)
+            {
+                blocks.Add(getTileAt(position+((Size)DirectionMethods.Direct(directions)))); // TODO: THIS IS WRONG! - @989onan89
+            }
+
+            return blocks;
         }
 
         public void setTileLocation(IBlock tile, Point value)
@@ -67,18 +99,10 @@ namespace SpaceGame2D.enviroment.blocks
         {
             if (_blocks[value.X, value.Y] != null)
             {
-                _blocks[value.X, value.Y].destruct();
-                _blocks[value.X, value.Y] = new AirBlock(this, value);
+                
+                _blocks[value.X, value.Y] = null;
+                
             }
-        }
-
-        public void moveGridsTileLocation(Point value)
-        {
-            if (_blocks[value.X, value.Y] != null)
-            {
-                _blocks[value.X, value.Y] = new AirBlock(this,value);
-            }
-
         }
     }
 }

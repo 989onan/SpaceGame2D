@@ -1,6 +1,8 @@
 ﻿using SpaceGame2D.enviroment.physics;
 using SpaceGame2D.enviroment.species;
-using SpaceGame2D.graphics.texturemanager;
+using SpaceGame2D.enviroment.storage;
+using SpaceGame2D.enviroment.world.actors;
+using SpaceGame2D.graphics.renderables;
 using SpaceGame2D.graphics.texturemanager.packer;
 using SpaceGame2D.utilities.math;
 using System;
@@ -13,9 +15,8 @@ using System.Threading.Tasks;
 
 namespace SpaceGame2D.enviroment.blocks
 {
-    public interface IBlock: IStaticPhysicsObject, IRenderableObject
+    public interface IBlock: IStaticPhysicsObject, IRenderableObject, IItemSource
     {
-
         string idle_image { get; }
 
         public BlockGrid grid { get; set; }
@@ -24,11 +25,12 @@ namespace SpaceGame2D.enviroment.blocks
 
 
 
-        public void destruct();
 
 
         public Point block_position { get; set; }
-        
+
+
+        public PhysicalItem Mine();
 
         //void LoadBlockTextures(Dictionary<string, TextureTile> atlasList); //this can be called more than once.
     }

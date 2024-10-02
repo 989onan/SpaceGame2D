@@ -1,5 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using SpaceGame2D.enviroment.physics;
 using SpaceGame2D.graphics.compiledshaders;
 using SpaceGame2D.graphics.texturemanager;
 using StbImageSharp;
@@ -52,6 +53,13 @@ namespace SpaceGame2D.utilities.math
 
 
 
+        }
+
+
+        public AABB(float xmin,  float ymin, float xmax, float ymax)
+        {
+            this.Minimum = new Vector2(xmin, ymin);
+            this.Maximum = new Vector2(ymax, xmax);
         }
 
 
@@ -130,7 +138,7 @@ namespace SpaceGame2D.utilities.math
             return true;
         }
 
-        public bool ExtendByVector(Vector2 other)
+        public AABB ExtendByVector(Vector2 other)
         {
 
             if (other.X > 0)
@@ -153,7 +161,7 @@ namespace SpaceGame2D.utilities.math
                 this.x_min += other.X;
             }
 
-            return true;
+            return this;
         }
 
 
@@ -232,7 +240,274 @@ namespace SpaceGame2D.utilities.math
             return false;
         }
 
+        public List<IStaticPhysicsObject> CollectAABBIntercectingMe(List<IStaticPhysicsObject> colliders)
+        {
+            List<IStaticPhysicsObject> static_physics_potential = new List<IStaticPhysicsObject>();
 
+            foreach (IStaticPhysicsObject collider in colliders) //so we're doing less calculations.
+            {
+                //Console.WriteLine("we have a static object.");
+                if (collider.Collider.Intercects(this) && collider.HasCollision)
+                {
+
+                    static_physics_potential.Add(collider);
+                }
+            }
+
+            return static_physics_potential;
+        }
+        public List<AABB> CollectAABBIntercectingMeAABB(List<AABB> colliders)
+        {
+            List<AABB> static_physics_potential = new List<AABB>();
+
+            foreach (AABB collider in colliders) //so we're doing less calculations.
+            {
+                //Console.WriteLine("we have a static object.");
+                if (collider.Intercects(this))
+                {
+
+                    static_physics_potential.Add(collider);
+                }
+            }
+
+            return static_physics_potential;
+        }
+
+
+
+        //reuse sweep algorithm and abuse it as a raycaster. - @989onan
+        public static List<OrderedPlace<Tuple<IStaticPhysicsObject, Vector2>>> GetRayIntercectionAndNormal(Vector4 ray, List<IStaticPhysicsObject> potential)
+        {
+            List<OrderedPlace<Tuple<IStaticPhysicsObject, Vector2>>> result = new List<OrderedPlace<Tuple<IStaticPhysicsObject, Vector2>>>();
+
+            Vector2 ray_start = new Vector2(ray.X, ray.Y);
+            Vector2 ray_end = new Vector2(ray.Z, ray.W);
+
+            Vector2 velocity = ray_end-ray_start;
+
+            foreach(IStaticPhysicsObject collider in potential)
+            {
+                Vector2 InvEntry = new Vector2(0, 0);
+                Vector2 InvExit = new Vector2(0, 0);
+
+                // find the distance between the objects on the near and far sides for both x and y 
+                if (velocity.X > 0.0f)
+                {
+                    InvEntry.X = collider.Collider.x_min - (ray_start.X + .01f);
+                    InvExit.X = collider.Collider.x_max - (ray_start.X - .01f);
+                }
+                else
+                {
+                    InvEntry.X = collider.Collider.x_max - (ray_start.X - .01f);
+                    InvExit.X = collider.Collider.x_min - (ray_start.X + .01f);
+                }
+
+                if (velocity.Y > 0.0f)
+                {
+                    InvEntry.Y = collider.Collider.y_min - (ray_start.Y + .01f);
+                    InvExit.Y = collider.Collider.y_max - (ray_start.Y  - .01f);
+                }
+                else
+                {
+                    InvEntry.Y = collider.Collider.y_max - (ray_start.Y - .01f);
+                    InvExit.Y = collider.Collider.y_min - (ray_start.Y + .01f);
+                }
+
+
+                Vector2 Entry;
+                Vector2 Exit;
+
+                if (velocity.X == 0.0f)
+                {
+                    Entry.X = float.NegativeInfinity;
+                    Exit.X = float.PositiveInfinity;
+                }
+                else
+                {
+                    Entry.X = InvEntry.X / velocity.X;
+                    Exit.X = InvExit.X / velocity.X;
+                }
+
+                if (velocity.Y == 0.0f)
+                {
+                    Entry.Y = float.NegativeInfinity;
+                    Exit.Y = float.PositiveInfinity;
+                }
+                else
+                {
+                    Entry.Y = InvEntry.Y / velocity.Y;
+                    Exit.Y = InvExit.Y / velocity.Y;
+                }
+
+                float entryTime = Math.Max(Entry.X, Entry.Y);
+                float exitTime = Math.Min(Exit.X, Exit.Y);
+
+                Vector2 normal = new Vector2(0, 0);
+
+
+
+                /*if (entryTime > exitTime) return new Tuple<float, Vector2>(1, normal); // This check was correct.
+                if (Entry.X < 0.0f && Entry.Y < 0.0f) return new Tuple<float, Vector2>(1, normal);
+                if (Entry.X < 0.0f)
+                {
+                    if (original_obj.x_max < collider.x_min || original_obj.x_min > collider.x_max) return new Tuple<float, Vector2>(1, normal);
+                }
+                if (Entry.Y < 0.0f)
+                {
+                    // Check that the bounding box started overlapped or not.
+                    if (original_obj.y_max < collider.y_min || original_obj.y_min > collider.y_max) return new Tuple<float, Vector2>(1, normal);
+                }*/
+                if (entryTime > exitTime || Entry.X < 0.0f && Entry.Y < 0.0f || Entry.X > 1.0f || Entry.Y > 1.0f)
+                {
+                    
+                }
+                else // if there was a collision 
+                {
+                    // calculate normal of collided surface
+                    if (Entry.X > Entry.Y)
+                    {
+                        if (InvEntry.X < 0.0f)
+                        {
+                            normal.X = 1.0f;
+                            normal.Y = 0.0f;
+                        }
+                        else
+                        {
+                            normal.X = -1.0f;
+                            normal.Y = 0.0f;
+                        }
+                    }
+                    else
+                    {
+                        if (InvEntry.Y < 0.0f)
+                        {
+                            normal.X = 0.0f;
+                            normal.Y = 1.0f;
+                        }
+                        else
+                        {
+                            normal.X = 0.0f;
+                            normal.Y = -1.0f;
+                        }
+                    } // return the time of collisionreturn entryTime; 
+                    result.Add(new OrderedPlace<Tuple<IStaticPhysicsObject, Vector2>>(entryTime, new Tuple<IStaticPhysicsObject, Vector2>(collider, normal)));
+                }
+            
+            }
+
+
+            return result;
+        }
+
+        public static Tuple<float, Vector2> SweptAABB(AABB original_obj, AABB collider, Vector2 Velocity_dir)
+        {
+            Vector2 InvEntry = new Vector2(0, 0);
+            Vector2 InvExit = new Vector2(0, 0);
+
+            // find the distance between the objects on the near and far sides for both x and y 
+            if (Velocity_dir.X > 0.0f)
+            {
+                InvEntry.X = collider.x_min - original_obj.x_max;
+                InvExit.X = collider.x_max - original_obj.x_min;
+            }
+            else
+            {
+                InvEntry.X = collider.x_max - original_obj.x_min;
+                InvExit.X = collider.x_min - original_obj.x_max;
+            }
+
+            if (Velocity_dir.Y > 0.0f)
+            {
+                InvEntry.Y = collider.y_min - original_obj.y_max;
+                InvExit.Y = collider.y_max - original_obj.y_min;
+            }
+            else
+            {
+                InvEntry.Y = collider.y_max - original_obj.y_min;
+                InvExit.Y = collider.y_min - original_obj.y_max;
+            }
+
+
+            Vector2 Entry;
+            Vector2 Exit;
+
+            if (Velocity_dir.X == 0.0f)
+            {
+                Entry.X = float.NegativeInfinity;
+                Exit.X = float.PositiveInfinity;
+            }
+            else
+            {
+                Entry.X = InvEntry.X / Velocity_dir.X;
+                Exit.X = InvExit.X / Velocity_dir.X;
+            }
+
+            if (Velocity_dir.Y == 0.0f)
+            {
+                Entry.Y = float.NegativeInfinity;
+                Exit.Y = float.PositiveInfinity;
+            }
+            else
+            {
+                Entry.Y = InvEntry.Y / Velocity_dir.Y;
+                Exit.Y = InvExit.Y / Velocity_dir.Y;
+            }
+
+            float entryTime = Math.Max(Entry.X, Entry.Y);
+            float exitTime = Math.Min(Exit.X, Exit.Y);
+
+            Vector2 normal = new Vector2(0, 0);
+
+
+
+            /*if (entryTime > exitTime) return new Tuple<float, Vector2>(1, normal); // This check was correct.
+            if (Entry.X < 0.0f && Entry.Y < 0.0f) return new Tuple<float, Vector2>(1, normal);
+            if (Entry.X < 0.0f)
+            {
+                if (original_obj.x_max < collider.x_min || original_obj.x_min > collider.x_max) return new Tuple<float, Vector2>(1, normal);
+            }
+            if (Entry.Y < 0.0f)
+            {
+                // Check that the bounding box started overlapped or not.
+                if (original_obj.y_max < collider.y_min || original_obj.y_min > collider.y_max) return new Tuple<float, Vector2>(1, normal);
+            }*/
+            if (entryTime > exitTime || Entry.X < 0.0f && Entry.Y < 0.0f || Entry.X > 1.0f || Entry.Y > 1.0f)
+            {
+                return new Tuple<float, Vector2>(1, normal);
+            }
+            else // if there was a collision 
+            {
+                // calculate normal of collided surface
+                if (Entry.X > Entry.Y)
+                {
+                    if (InvEntry.X < 0.0f)
+                    {
+                        normal.X = 1.0f;
+                        normal.Y = 0.0f;
+                    }
+                    else
+                    {
+                        normal.X = -1.0f;
+                        normal.Y = 0.0f;
+                    }
+                }
+                else
+                {
+                    if (InvEntry.Y < 0.0f)
+                    {
+                        normal.X = 0.0f;
+                        normal.Y = 1.0f;
+                    }
+                    else
+                    {
+                        normal.X = 0.0f;
+                        normal.Y = -1.0f;
+                    }
+                } // return the time of collisionreturn entryTime; 
+            }
+
+            return new Tuple<float, Vector2>(entryTime, normal);
+        }
 
         public void RestrictAABBWithinOurselves(AABB other)
         {

@@ -1,5 +1,4 @@
-﻿using SpaceGame2D.enviroment;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -14,6 +13,9 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using SpaceGame2D.enviroment.blocks;
 using SpaceGame2D.enviroment.world;
+using SpaceGame2D.enviroment.world.actors;
+using SpaceGame2D.enviroment;
+using SpaceGame2D.threads.Factory_Threads;
 
 namespace SpaceGame2D.threads
 {
@@ -24,6 +26,9 @@ namespace SpaceGame2D.threads
         public Main_PhysicsThread physics_thread;
         public Main_GraphicsThread graphics_thread;
 
+        public static List<FactorySubThread> factories = new List<FactorySubThread>();
+
+        public static MainThread Instance { get; private set; }
 
         private DateTime last_time;
 
@@ -32,24 +37,38 @@ namespace SpaceGame2D.threads
         public bool is_running { get; private set; }
 
         public Player player;
-        public Player player2;
+
+        public SelectionRedicule selectedCube;
+        //public Player player2;
 
         public IWorld cur_world;
 
         public MainThread()
         {
+            if(MainThread.Instance != null)
+            {
+                return; //don't start game if it already started.
+            }
+            MainThread.Instance = this;
             this.gamestart = DateTime.Now;
 
             SpeciesRegistry.GenerateList();
             
-            this.graphics_thread = new Main_GraphicsThread(this);
+
+
+            this.graphics_thread = new Main_GraphicsThread();
             this.graphics_thread.Window.Unload += Stop;
             //player = new Player(new Vector2(-1f, 1.1f), SpeciesRegistry.getSpecies("SpaceGame2D:Human"));
             //TODO: Remove these!
+            selectedCube = new SelectionRedicule("SpaceGame2D:default");
             player = new Player(new Vector2(0,20), SpeciesRegistry.getSpecies("SpaceGame2D:Avali"));
 
-            cur_world = new Planet("Earth", new Point(200, 200), new Vector2(0, -9.8f));
-            new WorldGenerator(99, cur_world.BlockGrid).generate();
+            
+
+            cur_world = new Planet("Earth", new Point(200, 200), new WorldEnviromentProperties(new Vector2(0, -9.8f),2));
+            
+            Random random = new Random();
+            new WorldGenerator(random.Next(), cur_world.BlockGrid).generate();
 
 
             cur_world.BlockGrid.RenderOffset = new Vector2(-1, -1f);
@@ -88,7 +107,7 @@ namespace SpaceGame2D.threads
 
 
 
-            this.physics_thread = new Main_PhysicsThread(this);
+            this.physics_thread = new Main_PhysicsThread();
 
 
 
@@ -102,44 +121,6 @@ namespace SpaceGame2D.threads
             this.graphics_thread.Window.Run();//run last.
         }
 
-        public void KeyPressed(KeyboardKeyEventArgs e)
-        {
-            if (e.Key == Keys.D)
-            {
-                player.velocity = new Vector2(1f * player.species.walk_speed, player.velocity.Y);
-            }
-            if (e.Key == Keys.A)
-            {
-                player.velocity = new Vector2(-1f * player.species.walk_speed, player.velocity.Y);
-            }
-            if(e.Key == Keys.Space)
-            {
-                if (player.OnGround)
-                {
-                    player.velocity = new Vector2(player.velocity.X, player.species.jump_velocity);
-                }
-                else
-                {
-                    Console.WriteLine("failed ground check");
-                }
-            }
-            //Console.WriteLine("pressed key.");
-            
-        }
-
-        public void KeyReleased(KeyboardKeyEventArgs e)
-        {
-            if (e.Key == Keys.D)
-            {
-                player.velocity = new Vector2(0f, player.velocity.Y);
-            }
-            if (e.Key == Keys.A)
-            {
-                player.velocity = new Vector2(0f, player.velocity.Y);
-            }
-            //Console.WriteLine("pressed key.");
-
-        }
 
         public void Stop()
         {
@@ -162,11 +143,11 @@ namespace SpaceGame2D.threads
             double totaltime = (DateTime.Now - this.gamestart).TotalSeconds;
             if (totaltime > 3000)
             {
-                this.Stop();
+                //this.Stop();
             }
             else
             {
-                //this.graphics_thread.Zoom = (float)(totaltime * .01);
+                
             }
 
         }

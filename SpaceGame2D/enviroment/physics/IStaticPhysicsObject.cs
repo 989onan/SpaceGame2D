@@ -1,4 +1,6 @@
-﻿using SpaceGame2D.utilities.math;
+﻿using SpaceGame2D.graphics.renderables;
+using SpaceGame2D.threads.PhysicsThread;
+using SpaceGame2D.utilities.math;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +17,8 @@ namespace SpaceGame2D.enviroment.physics
 
         AABB Collider { get; }
 
-        
+        void destruct();
+        void TriggerCollideEvent(IActivePhysicsObject physicsObject, Vector2 normal);
 
         bool HasCollision { get; set; }
     }

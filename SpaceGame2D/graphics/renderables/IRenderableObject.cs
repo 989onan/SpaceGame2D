@@ -1,4 +1,5 @@
 ﻿using SpaceGame2D.enviroment.physics;
+using SpaceGame2D.graphics.texturemanager;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SpaceGame2D.graphics.texturemanager
+namespace SpaceGame2D.graphics.renderables
 {
     public interface IRenderableObject
     {
@@ -16,8 +17,8 @@ namespace SpaceGame2D.graphics.texturemanager
 
         Vector2 GraphicCenterPosition { get; }
 
-        TextureTile UpdateCurrentImage();
-        IRenderableGraphic graphic { get; }
+        TextureTileFrame UpdateCurrentImage(float animation_time);
+        IRenderableWorldGraphic graphic { get; }
 
     }
 }

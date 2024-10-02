@@ -15,6 +15,9 @@ namespace SpaceGame2D.enviroment.species
 
         float jump_velocity { get; }
 
+        float reach_meters {  get; }
+        string walking_image { get; }
+
         void LoadSpecies(Dictionary<string, ISpecies> speciesList); //this can be called more than once.
     }
 }

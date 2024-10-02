@@ -17,16 +17,18 @@ namespace SpaceGame2D.enviroment.world
 
         public bool isPlanet => true;
 
-        public Vector2 gravity { get; }
+        public WorldEnviromentProperties enviro { get; private set;}
 
+        
 
-        public Planet(string name, Point size, Vector2 gravity)
+        public Planet(string name, Point size, WorldEnviromentProperties enviro)
         {
             this.BlockGrid = new BlockGrid(size);
-            this.gravity = gravity;
-            this.Name = name;
-
             
+            this.Name = name;
+            this.enviro = enviro;
+
+
         }
     }
 }

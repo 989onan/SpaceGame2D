@@ -1,4 +1,5 @@
-﻿using SpaceGame2D.utilities.math;
+﻿using SpaceGame2D.enviroment.blocks;
+using SpaceGame2D.utilities.math;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +13,10 @@ namespace SpaceGame2D.enviroment.physics
     {
 
         bool IsActive { get; set; }
+        
         new Vector2 position_physics { get; set; }
 
-
-        public bool OnGround { get; set; }
+        public IStaticPhysicsObject ground { get; set; }
 
         Vector2 velocity { get; set; }
 

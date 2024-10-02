@@ -1,4 +1,5 @@
 ﻿using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -71,9 +72,27 @@ namespace SpaceGame2D.graphics.compiledshaders
             GL.DetachShader(Handle, FragmentShader);
             GL.DeleteShader(FragmentShader);
             GL.DeleteShader(VertexShader);
+
+
+            GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
+            _uniformLocations = new Dictionary<string, int>();
+
+            // Loop over all the uniforms,
+            for (var i = 0; i < numberOfUniforms; i++)
+            {
+                // get the name of this uniform,
+                var key = GL.GetActiveUniform(Handle, i, out _, out _);
+
+                // get the location,
+                var location = GL.GetUniformLocation(Handle, key);
+
+                // and then add it to the dictionary.
+                _uniformLocations.Add(key, location);
+            }
         }
 
         private bool disposedValue = false;
+        private Dictionary<string, int> _uniformLocations;
 
         protected virtual void Dispose(bool disposing)
         {
@@ -93,7 +112,15 @@ namespace SpaceGame2D.graphics.compiledshaders
             }
         }
 
-
+        public void SetMatrix4(string name, Matrix4 data)
+        {
+            
+            if(_uniformLocations.ContainsKey(name)){
+                GL.UseProgram(Handle);
+                GL.UniformMatrix4(_uniformLocations[name], true, ref data);
+            }
+            
+        }
         public void Dispose()
         {
             Dispose(true);

@@ -16,6 +16,15 @@ namespace SpaceGame2D.graphics.texturemanager.packer
 {
     public class Atlas
     {
+
+        public static string[] supported_formats = new string[]
+        {
+            ".png",
+            ".bmp",
+            ".tga",
+            ".tiff"
+        };
+
         private static int _width;
         private static int _height;
 
@@ -44,6 +53,7 @@ namespace SpaceGame2D.graphics.texturemanager.packer
         public static void LoadToGPU()
         {
             Handle = GL.GenTexture();
+            GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, Handle);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
@@ -54,6 +64,7 @@ namespace SpaceGame2D.graphics.texturemanager.packer
 
         public static void UseImage()
         {
+            GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, Handle);
         }
 
@@ -65,14 +76,27 @@ namespace SpaceGame2D.graphics.texturemanager.packer
             }
             else
             {
-                _Tiles.TryAdd(path, new TextureTile(path));
-                return _Tiles.GetValueOrDefault(path);
+                string filename = path.Remove(path.LastIndexOf('.'), path.Length - path.LastIndexOf('.'));
+                if (filename.EndsWith("frames"))
+                {
+                    string number_last = filename.Remove(filename.LastIndexOf('_'), 7);
+                    Console.WriteLine(number_last);
+
+                    _Tiles.TryAdd(path, new TextureTile(path, int.Parse(number_last.Substring(number_last.LastIndexOf('_')+1, number_last.Length - (number_last.LastIndexOf('_')+1)))));
+                    return _Tiles.GetValueOrDefault(path);
+                }
+                else
+                {
+                    _Tiles.TryAdd(path, new TextureTile(path,1));
+                    return _Tiles.GetValueOrDefault(path);
+                }
+                
             }
 
             
         }
 
-        public static TextureTile getTexture(string path)
+        private static TextureTile getTexture(string path)
         {
             if (Atlas.Tiles.ContainsKey(path))
             {
@@ -84,13 +108,30 @@ namespace SpaceGame2D.graphics.texturemanager.packer
             }
         }
 
+
+        public static bool is_supported(string path)
+        {
+            bool result = false;
+            foreach(string type in supported_formats)
+            {
+                if(path.Replace("\\", "/").EndsWith(type))
+                {
+                    result = true;
+                }
+            }
+
+            return result;
+        }
+
         public static void RegenerateAtlas()
         {
             //Console.WriteLine("regenerating atlas!");
             foreach (string filepath in Directory.GetFiles(Path.Join(BootStrapper.path, "graphics/textures/"), "*.*", SearchOption.AllDirectories))
             {
                 string filepath_real = filepath.Split("graphics/textures/")[1];
-                if (!(filepath_real.Replace("\\", "/").EndsWith(".png") || filepath_real.Replace("\\", "/").EndsWith(".bmp") || filepath_real.Replace("\\", "/").EndsWith(".tga") || filepath_real.Replace("\\", "/").EndsWith(".tiff")))
+                
+
+                if (!(is_supported(filepath_real.Replace("\\", "/"))))
                 {
                     continue;
                 }
@@ -123,6 +164,13 @@ namespace SpaceGame2D.graphics.texturemanager.packer
 
             Console.WriteLine("atlas regenerated!");
             isLoaded = true;
+        }
+
+        public static TextureTileFrame getTextureAnimated(string name, float animation_time)
+        {
+            TextureTile image = getTexture(name);
+
+            return image.getAnimationFrame(((int)(animation_time / 2f)));
         }
 
 

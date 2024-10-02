@@ -12,11 +12,14 @@ namespace SpaceGame2D.graphics.texturemanager
 {
     public class TextureTile: IComparable<TextureTile>
     {
-        public float x => (((float)start_x)/ ((float)Atlas.width));
-        public float y => (((float)start_y) / ((float)Atlas.height));
+        private float x => (((float)start_x)/ ((float)Atlas.width));
+        private float y => (((float)start_y) / ((float)Atlas.height));
 
-        public float width => (((float)image.Width) / ((float)Atlas.width));
-        public float height => (((float)image.Height) / ((float)Atlas.height));
+
+
+        public int frame_count { get; private set; }
+        private float width => (((float)image.Width) / ((float)Atlas.width));
+        private float height => (((float)image.Height) / ((float)Atlas.height));
 
 
         public int start_x { get ; private set; }
@@ -32,17 +35,20 @@ namespace SpaceGame2D.graphics.texturemanager
 
         public bool IsLoaded { get; private set; }
 
-        public TextureTile(string texture_path)
+        public TextureTile(string texture_path, int frame_count)
         {
 
             //StbImage.stbi_set_flip_vertically_on_load(1);
             this.image = ImageResult.FromStream(File.OpenRead(Path.Join(BootStrapper.path, "graphics/textures/" + texture_path)), ColorComponents.RedGreenBlueAlpha);
             this.path = texture_path;
             this.IsLoaded = false;
-
+            this.frame_count = frame_count;
         }
 
-
+        public TextureTileFrame getAnimationFrame(int frame)
+        {
+            return new TextureTileFrame(image.Width, image.Height, this.start_x, this.start_y, frame, frame_count);
+        }
 
 
         public void SetPositionOnNewAtlas(int x, int y)
@@ -74,7 +80,7 @@ namespace SpaceGame2D.graphics.texturemanager
             for (int k = 0; k < h; k++) {
                 for (int i = 0; i < w; i++)
                 {
-                    for(int channel = 0; channel < 3; channel++) {
+                    for(int channel = 0; channel < 4; channel++) {
                         byte imagepixel = image_pixels[
                                         (int)((
                                             (k * w)

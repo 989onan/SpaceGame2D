@@ -35,7 +35,7 @@ namespace SpaceGame2D.enviroment.world.actors
             {
                 return true;
             }
-            return ground.HasCollision == false && isactive_private;
+            return isactive_private;
         }
 
         public Vector2 position_physics { get => Collider.Center; set => Collider.Center = value; }
@@ -43,7 +43,7 @@ namespace SpaceGame2D.enviroment.world.actors
 
 
 
-        public IStaticPhysicsObject ground { get; set; }
+        public AABBVoxel ground { get; set; }
 
         public AABB Collider { get; }
 
@@ -69,8 +69,7 @@ namespace SpaceGame2D.enviroment.world.actors
 
         public void destruct()
         {
-            GraphicsRegistry.deregisterWorldRenderGraphic(this.graphic);
-            Main_PhysicsThread.static_physics_objects.Remove(this);
+            
             HasCollision = false;
             this.count = 0;
             this.IsActive = false;

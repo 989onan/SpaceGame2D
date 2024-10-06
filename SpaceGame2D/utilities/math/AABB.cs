@@ -55,6 +55,12 @@ namespace SpaceGame2D.utilities.math
 
         }
 
+        public AABB()
+        {
+            this.Maximum = Vector2.Zero;
+            this.Minimum = Vector2.Zero;
+        }
+
 
         public AABB(float xmin,  float ymin, float xmax, float ymax)
         {
@@ -165,6 +171,82 @@ namespace SpaceGame2D.utilities.math
         }
 
 
+        public bool canCreateRectangleFrom(AABB other)
+        {
+            //first if statements are if two sides touch
+            if ( other.Minimum.X == this.Maximum.X)
+            {
+                if(other.Minimum.Y == this.Minimum.Y && other.Maximum.Y == this.Maximum.Y)
+                {
+                    return true;
+                }
+            }
+            else if (other.Minimum.Y == this.Maximum.Y)
+            {
+                if (other.Minimum.X == this.Minimum.X && other.Maximum.X == this.Maximum.X)
+                {
+                    return true;
+                }
+            }
+            else if(this.Minimum.Y == other.Maximum.Y)
+            {
+                if (other.Minimum.X == this.Minimum.X && other.Maximum.X == this.Maximum.X)
+                {
+                    return true;
+                }
+            }
+            else if(this.Minimum.X == other.Maximum.X)
+            {
+                if (other.Minimum.Y == this.Minimum.Y && other.Maximum.Y == this.Maximum.Y)
+                {
+                    return true;
+                }
+            }
+            return false;
+
+        }
+
+        public Tuple<AABB, AABB> SliceX(float position)
+        {
+            //first if statements are if two sides touch
+            AABB min = new AABB(this);
+
+            AABB max = new AABB(this);
+
+            if (position < this.Maximum.X && position > this.Minimum.X)
+            {
+
+                max.Minimum.X = position;
+                min.Maximum.X = position;
+                return new Tuple<AABB, AABB>(min, max);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException("position X for slicing is outside of this AABB's range!");
+            }
+        }
+
+        public Tuple<AABB, AABB> SliceY(float position)
+        {
+            //first if statements are if two sides touch
+            AABB min = new AABB(this);
+
+            AABB max = new AABB(this);
+
+            if (position < this.Maximum.Y && position > this.Minimum.Y)
+            {
+
+                max.Minimum.Y = position;
+                min.Maximum.Y = position;
+                return new Tuple<AABB, AABB>(min, max);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException("position Y for slicing is outside of this AABB's range!");
+            }
+        }
+
+
         public Vector2 PushOutOfMe(AABB other)
         {
             if (!Intercects(other))
@@ -174,7 +256,7 @@ namespace SpaceGame2D.utilities.math
             //direction we should push for shortest amount;
             float left = other.x_max - this.x_min;
             float top = this.y_max - other.y_min;
-            float bottom = this.y_max - other.y_min;
+            float bottom = other.y_max - this.y_min;
             float right = this.x_max - other.x_min;
 
             int axies_infinity = 0;
@@ -230,24 +312,32 @@ namespace SpaceGame2D.utilities.math
 
         public bool Intercects(AABB other)
         {
-            if (other.Maximum.X > Minimum.X &&
-                other.Minimum.X < Maximum.X &&
-                other.Maximum.Y > Minimum.Y &&
-                other.Minimum.Y < Maximum.Y)
+            //hopefully nesting this way allows for us to check only a few numbers. idk if this is faster or not.
+            if (other.Maximum.X > Minimum.X )
             {
-                return true;
+                if(other.Minimum.X < Maximum.X)
+                {
+                    if (other.Maximum.Y > Minimum.Y)
+                    {
+                        if(other.Minimum.Y < Maximum.Y)
+                        {
+                            return true;
+                        }
+                    }
+                }
             }
             return false;
         }
 
-        public List<IStaticPhysicsObject> CollectAABBIntercectingMe(List<IStaticPhysicsObject> colliders)
+        public List<AABBVoxel> CollectAABBIntercectingMe(List<AABBVoxel> colliders)
         {
-            List<IStaticPhysicsObject> static_physics_potential = new List<IStaticPhysicsObject>();
+            List<AABBVoxel> static_physics_potential = new List<AABBVoxel>();
 
-            foreach (IStaticPhysicsObject collider in colliders) //so we're doing less calculations.
+            foreach (AABBVoxel collider in colliders) //so we're doing less calculations.
             {
+                
                 //Console.WriteLine("we have a static object.");
-                if (collider.Collider.Intercects(this) && collider.HasCollision)
+                if (collider.generalization.Intercects(this))
                 {
 
                     static_physics_potential.Add(collider);
@@ -256,6 +346,24 @@ namespace SpaceGame2D.utilities.math
 
             return static_physics_potential;
         }
+
+        public List<IStaticPhysicsObject> CollectAABBIntercectingMeIstatic(List<IStaticPhysicsObject> colliders)
+        {
+            List<IStaticPhysicsObject> static_physics_potential = new List<IStaticPhysicsObject>();
+
+            foreach (IStaticPhysicsObject collider in colliders) //so we're doing less calculations.
+            {
+                //Console.WriteLine("we have a static object.");
+                if (collider.Collider.Intercects(this))
+                {
+
+                    static_physics_potential.Add(collider);
+                }
+            }
+
+            return static_physics_potential;
+        }
+
         public List<AABB> CollectAABBIntercectingMeAABB(List<AABB> colliders)
         {
             List<AABB> static_physics_potential = new List<AABB>();

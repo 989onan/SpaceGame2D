@@ -113,13 +113,15 @@ namespace SpaceGame2D.threads.GraphicsThread
 
         private void Render(FrameEventArgs e)
         {
+            
+
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.ClearColor(142f/225f, 202f/255f,1f,1f);
             //GL.Disable(EnableCap.DepthTest);
             DateTime now = DateTime.Now;
-            
-            //GL.Clear(ClearBufferMask.ColorBufferBit);
 
+            //GL.Clear(ClearBufferMask.ColorBufferBit);
+            
 
             double deltatime = (now - this.last_time).TotalSeconds;
 
@@ -150,7 +152,7 @@ namespace SpaceGame2D.threads.GraphicsThread
             MainThread.Instance.selectedCube.DrawImage(Zoom, -physics_pos, this.window_size, animation_time);
             foreach (IRenderable obj in GraphicsRegistry.getAllRenderGraphics())
             {
-                //iterate through all blocks that need to be rendered.
+                //iterate through all graphics and ui that need to be rendered.
                 obj.Draw(animation_time, this.window_size);
             }
 

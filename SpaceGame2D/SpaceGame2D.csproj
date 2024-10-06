@@ -23,6 +23,7 @@
   <ItemGroup>
     <Folder Include="enviroment\universe\" />
     <Folder Include="graphics\textures\ui\storage\" />
+    <Folder Include="threads\awaiters\" />
   </ItemGroup>
 
 

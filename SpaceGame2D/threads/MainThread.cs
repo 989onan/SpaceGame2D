@@ -22,7 +22,7 @@ namespace SpaceGame2D.threads
     public class MainThread
     {
 
-        public Thread main_thread;
+        public Task main_thread;
         public Main_PhysicsThread physics_thread;
         public Main_GraphicsThread graphics_thread;
 
@@ -71,11 +71,12 @@ namespace SpaceGame2D.threads
             new WorldGenerator(random.Next(), cur_world.BlockGrid).generate();
 
 
-            cur_world.BlockGrid.RenderOffset = new Vector2(-1, -1f);
+            cur_world.BlockGrid.RenderOffset = new Vector2(0, 0f);
+            cur_world.BlockGrid.RecalculateVoxelSimplification();
             //player2 = new Player(new Vector2(1f,0f), Avali.instance);
 
 
-            
+
             /*Human instance = Human.Instance;
             IWorld spawn_planet = new Planet(universes[0], new Size(1, 1), new Vector2(0, -9.8f), "Avalon_Beta");
 
@@ -90,20 +91,22 @@ namespace SpaceGame2D.threads
 
 
 
-            main_thread = new Thread(new ThreadStart(() =>
+            main_thread = new Task(async () =>
             {
-                
+
+
                 if (!this.graphics_thread.is_running)
                 {
-                    Thread.Sleep(1);
+                    await Task.Delay(1);
                 }
                 this.is_running = true;
                 while (this.is_running)
                 {
-                    iterate();
+                    DateTime now = DateTime.Now;
+                    await iterate(now);
                     last_time = DateTime.Now;
                 }
-            }));
+            });
 
 
 
@@ -138,7 +141,7 @@ namespace SpaceGame2D.threads
             this.is_running = false;
         }
 
-        private void iterate()
+        private async Task iterate(DateTime now)
         {
             double totaltime = (DateTime.Now - this.gamestart).TotalSeconds;
             if (totaltime > 3000)

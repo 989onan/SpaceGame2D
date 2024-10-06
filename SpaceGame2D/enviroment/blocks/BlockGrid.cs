@@ -1,4 +1,5 @@
-﻿using SpaceGame2D.utilities.math;
+﻿using SpaceGame2D.threads.PhysicsThread;
+using SpaceGame2D.utilities.math;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -11,6 +12,10 @@ namespace SpaceGame2D.enviroment.blocks
 {
     public class BlockGrid
     {
+
+        public static readonly float size_grid = .5f;
+
+        private List<AABBVoxel> voxel_grid = new List<AABBVoxel>();
 
         private IBlock[,] _blocks;
 
@@ -25,6 +30,12 @@ namespace SpaceGame2D.enviroment.blocks
 
         public Vector2 RenderOffset { get; set; }
 
+        public void RecalculateVoxelSimplification()
+        {
+            Main_PhysicsThread.static_physics_objects.RemoveAll(o => this.voxel_grid.Contains(o));
+            this.voxel_grid = AABBVoxel.VoxelizeGrid(this);
+            Main_PhysicsThread.static_physics_objects.AddRange(this.voxel_grid);
+        }
 
         public Point getTileLocation(IBlock tile)
         {
@@ -52,7 +63,12 @@ namespace SpaceGame2D.enviroment.blocks
 
         public IBlock getTileAt(int x, int y)
         {
-            return _blocks[x % size.X, y % size.Y];
+            if (x >= this.size.X || y >= this.size.Y)
+            {
+                return null;
+            }
+            return _blocks[x, y];
+            
         }
 
         public List<IBlock> gatherArea(Point Min, Point Max)
@@ -93,6 +109,7 @@ namespace SpaceGame2D.enviroment.blocks
             }
             tile.grid = this;
             _blocks[value.X, value.Y] = tile;
+            
         }
 
         public void deleteTileLocation(Point value)

@@ -32,14 +32,16 @@ namespace SpaceGame2D.threads.PhysicsThread
         private bool is_running;
 
         public static ConcurrentList<IActivePhysicsObject> active_physics_objects = new ConcurrentList<IActivePhysicsObject>();
-        public static ConcurrentList<IStaticPhysicsObject> static_physics_objects = new ConcurrentList<IStaticPhysicsObject>();
+        public static ConcurrentList<AABBVoxel> static_physics_objects = new ConcurrentList<AABBVoxel>();
 
         private DateTime last_time;
 
         public Main_PhysicsThread()
         {
 
-            int millisecond_clock = 10;
+            //I wish I could have atomic physics, but because of floating point error and how fast
+            //an infinitely fast clock would be, I have to restrict it to running at miniumum 100 times a second to prevent issues.
+            TimeSpan millisecond_clock = TimeSpan.FromMilliseconds(10);
 
 
 
@@ -49,22 +51,23 @@ namespace SpaceGame2D.threads.PhysicsThread
                 this.is_running = true;
                 if (!MainThread.Instance.is_running)
                 {
-                    Thread.Sleep(1);
+                    await Task.Delay(1);
                 }
                 last_time = DateTime.Now;
                 while (this.is_running)
                 {
                     DateTime now = DateTime.Now;
-                    await iterate();
+                    await iterate(now);
                     last_time = DateTime.Now;
 
-                    //I wish I could have atomic physics, but because of floating point error and how fast
-                    //an infinitely fast clock would be, I have to restrict it to running at maxiumum 100 times a second to prevent issues.
-                    float delta_times_secs = (float)((now - last_time).TotalMilliseconds);
-                    //Console.WriteLine("Delta time:" + ((int)float.Round(millisecond_clock - delta_times_secs)).ToString());
 
-                    await Task.Delay((int)float.Round(millisecond_clock - delta_times_secs));
-                    
+                    TimeSpan delta_times_secs = (last_time- now);
+                    Console.WriteLine(delta_times_secs.TotalSeconds.ToString());
+                    if ((millisecond_clock - delta_times_secs) > TimeSpan.Zero) //this is so that if our time took so long that we cannot 
+                    {
+                        await Task.Delay(millisecond_clock - delta_times_secs); //a-hah! Now we can have very accurate physics time clock.
+                    }
+
                     
                 }
             }
@@ -101,7 +104,7 @@ namespace SpaceGame2D.threads.PhysicsThread
             }
             if (window.IsKeyDown(Keys.Space))
             {
-                if (MainThread.Instance.player.ground != null && MainThread.Instance.player.ground.HasCollision == true)
+                if (MainThread.Instance.player.ground != null)
                 {
                     vel = new Vector2(vel.X, species.jump_velocity);
                 }
@@ -143,10 +146,11 @@ namespace SpaceGame2D.threads.PhysicsThread
             {
 
             }
-            //TODO: Mouse needs to be normalized based on it's position from center of screen, when coords represent the top left instead.
-            //I think it's the top left at least - @989onan
 
-            List<IStaticPhysicsObject> iblocks = static_physics_objects.FindAll(o => o is IBlock);
+            /*List<IStaticPhysicsObject> all_phys = new List<IStaticPhysicsObject>();
+            static_physics_objects.ForEach(o => all_phys.AddRange(o.whatMakesMeUp.ToArray()));
+
+            List<IStaticPhysicsObject> iblocks = all_phys.FindAll(o => o is IBlock);
 
             float meters_reach_to_screen = species.reach_meters;
 
@@ -156,7 +160,7 @@ namespace SpaceGame2D.threads.PhysicsThread
             MainThread.Instance.graphics_thread.PhysicalMousePosition = MouseClamped + MainThread.Instance.player.position_physics;
 
             List<IStaticPhysicsObject> collection = new AABB(MainThread.Instance.player.Collider).ExtendByVector(MouseClamped)
-                        .CollectAABBIntercectingMe(iblocks);
+                        .CollectAABBIntercectingMeIstatic(iblocks);
             //Console.WriteLine(MainThread.Instance.graphics_thread.RealMousePosition.X.ToString() + "," + MainThread.Instance.graphics_thread.RealMousePosition.Y.ToString());
             List<OrderedPlace<Tuple<IStaticPhysicsObject, Vector2>>> ray_interection = AABB.GetRayIntercectionAndNormal(new Vector4(
                 MainThread.Instance.player.position_physics.X,
@@ -174,10 +178,10 @@ namespace SpaceGame2D.threads.PhysicsThread
                 //Console.WriteLine(MainThread.Instance.selectedCube.target_block.block_position.ToString());
             }
             else
-            {
+            {*/
                 MainThread.Instance.selectedCube.target_block = null;
                 MainThread.Instance.selectedCube.alt_position = MainThread.Instance.graphics_thread.PhysicalMousePosition;
-            }
+            //}
 
 
             MainThread.Instance.player.velocity = vel;
@@ -206,20 +210,30 @@ namespace SpaceGame2D.threads.PhysicsThread
 
 
 
-        private async Task iterate()
+        private async Task iterate(DateTime now)
         {
-            DateTime now = DateTime.Now;
 
-            float delta_times_secs = (float)((now-last_time).TotalSeconds);
+
+            float delta_times_secs = (float)((now - last_time).TotalSeconds);
 
             //MainThread.Instance.cur_grid.RenderOffset = new Vector2(MainThread.Instance.cur_grid.RenderOffset.X, (MainThread.Instance.cur_grid.RenderOffset.Y)+ (delta_times_secs* .1f));
             ControlPlayer(delta_times_secs, now);
             //meat and butter of everything. does all object collision detection and speed reductions.
-            List<IStaticPhysicsObject> staticPhysicsObjects = active_physics_objects.Where(o => !o.IsActive).Select(o => o as IStaticPhysicsObject).ToList();
+            List<AABBVoxel> staticPhysicsObjects = active_physics_objects.Where(o => !o.IsActive).Select(o => o as IStaticPhysicsObject).Select(o=>
+            {
+                AABBVoxel h = new AABBVoxel();
+                h.Add(o);
+                return h;
+            }) .ToList();
             staticPhysicsObjects.AddRange(static_physics_objects);
             //Console.WriteLine(staticPhysicsObjects.Count().ToString());
 
             List<Task> physics_obj_threads = new List<Task>();
+
+            Dictionary<IActivePhysicsObject, Tuple<Vector2, Vector2>> phys_object_results = new Dictionary<IActivePhysicsObject, Tuple<Vector2, Vector2>>();
+
+            active_physics_objects.ForEach(obj => phys_object_results.Add(obj,new Tuple<Vector2,Vector2>(Vector2.Zero, Vector2.Zero))); 
+
 
             active_physics_objects.ForEach(obj => physics_obj_threads.Add(
                 Task.Run(async () =>
@@ -234,50 +248,47 @@ namespace SpaceGame2D.threads.PhysicsThread
 
                     Vector2 new_positon = obj.position_physics;
                     Vector2 physicsSpeedReducedVelocity = (obj.velocity) * delta_times_secs;
+                    Vector2 velocity = obj.velocity;
 
-                    List<IStaticPhysicsObject> static_physics_potential = velocity_aabb.ExtendByVector(physicsSpeedReducedVelocity).CollectAABBIntercectingMe(staticPhysicsObjects);
+                    List<AABBVoxel> static_physics_potential = velocity_aabb.ExtendByVector(physicsSpeedReducedVelocity).CollectAABBIntercectingMe(staticPhysicsObjects);
 
-                    List<OrderedPlace<IStaticPhysicsObject>> orderedPhysics = new List<OrderedPlace<IStaticPhysicsObject>>();
+                    List<OrderedPlace<AABBVoxel>> orderedPhysics = new List<OrderedPlace<AABBVoxel>>();
 
 
 
                     List<Task> Static_calcs = new List<Task>();
                     //float remainingtime = 0;
-                    foreach (IStaticPhysicsObject staticPhysicsObject in static_physics_potential.Where(o=>o != null))
+                    foreach (AABBVoxel staticPhysicsObject in static_physics_potential.Where(o => o != null))
                     {
-                        Static_calcs.Add(Task.Run(() =>
-                        {
-                            Tuple<float, Vector2> result = AABB.SweptAABB(obj.Collider, staticPhysicsObject.Collider, physicsSpeedReducedVelocity);
-                            //Console.WriteLine("has potential");
+                        Tuple<float, Vector2> result = AABB.SweptAABB(obj.Collider, staticPhysicsObject.generalization, physicsSpeedReducedVelocity);
+                        //Console.WriteLine("has potential");
 
-                            //if (remainingtime < .01f) remainingtime = 1f;
-                            orderedPhysics.Add(new OrderedPlace<IStaticPhysicsObject>(result.Item1, staticPhysicsObject));
-                        }));
-                    }
-                    await Task.WhenAll(Static_calcs.ToArray());
+                        //if (remainingtime < .01f) remainingtime = 1f;
+                        orderedPhysics.Add(new OrderedPlace<AABBVoxel>(result.Item1, staticPhysicsObject));
+                    }   
                     orderedPhysics.Sort();
                     obj.ground = null;
-                    foreach (OrderedPlace<IStaticPhysicsObject> sorted_item in orderedPhysics)
+                    foreach (OrderedPlace<AABBVoxel> sorted_item in orderedPhysics)
                     {
-                        IStaticPhysicsObject staticColliderClosest = sorted_item.obj;
+                        AABBVoxel staticColliderClosest = sorted_item.obj;
 
                         AABB active_collider = new AABB(obj.Collider);
                         active_collider.Center = new_positon;
 
-                        Tuple<float, Vector2> result = AABB.SweptAABB(active_collider, staticColliderClosest.Collider, physicsSpeedReducedVelocity);
+                        Tuple<float, Vector2> result = AABB.SweptAABB(active_collider, staticColliderClosest.generalization, physicsSpeedReducedVelocity);
                         float collisiontime = result.Item1;
                         Vector2 normal = result.Item2;
                         if (obj.ground == null)
                         {
                             if (normal.Y == -1f)
                             {
-                                obj.ground = sorted_item.obj;
+                               obj.ground = sorted_item.obj;
                             }
 
                         }
-                        if (staticColliderClosest.Collider.Intercects(obj.Collider))
+                        if (staticColliderClosest.generalization.Intercects(obj.Collider))
                         {
-                            Vector2 diff = staticColliderClosest.Collider.PushOutOfMe(obj.Collider);
+                            Vector2 diff = staticColliderClosest.generalization.PushOutOfMe(obj.Collider);
                             new_positon += diff;
                         }
                         if (result.Item1 >= 1.0f)
@@ -296,9 +307,9 @@ namespace SpaceGame2D.threads.PhysicsThread
                         new_positon += physicsSpeedReducedVelocity;
 
 
-                        if (staticColliderClosest.Collider.Intercects(obj.Collider))
+                        if (staticColliderClosest.generalization.Intercects(obj.Collider))
                         {
-                            Vector2 diff = staticColliderClosest.Collider.PushOutOfMe(obj.Collider);
+                            Vector2 diff = staticColliderClosest.generalization.PushOutOfMe(obj.Collider);
                             new_positon += diff;
                         }
                         staticColliderClosest.TriggerCollideEvent(obj, normal);
@@ -308,10 +319,10 @@ namespace SpaceGame2D.threads.PhysicsThread
                     {
                         new_positon += physicsSpeedReducedVelocity;
                     }
+                    //await Task.Delay(100);
 
                     obj.velocity = physicsSpeedReducedVelocity / delta_times_secs;
                     obj.velocity += delta_times_secs * MainThread.Instance.cur_world.enviro.gravity;
-
                     obj.position_physics = new_positon;
                 }))
             );
@@ -320,6 +331,8 @@ namespace SpaceGame2D.threads.PhysicsThread
             //Console.WriteLine("awaiting");
             await Task.WhenAll(physics_obj_threads.ToArray());
             //Console.WriteLine("awaiting finished");
+
+
 
 
 

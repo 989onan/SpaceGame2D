@@ -11,12 +11,12 @@ namespace SpaceGame2D.enviroment.physics
 {
     public interface IActivePhysicsObject: IStaticPhysicsObject
     {
-
+        //public bool destroying { get ;}
         bool IsActive { get; set; }
         
         new Vector2 position_physics { get; set; }
 
-        public IStaticPhysicsObject ground { get; set; }
+        public AABBVoxel ground { get; set; }
 
         Vector2 velocity { get; set; }
 

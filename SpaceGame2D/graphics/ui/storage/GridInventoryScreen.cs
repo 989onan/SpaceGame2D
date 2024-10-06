@@ -41,6 +41,7 @@ namespace SpaceGame2D.graphics.ui.storage
             }
             position = new Vector2(.05f, .05f);
             GuiScreenSize = new Vector2(.3f, .3f);
+            //Console.WriteLine("created an inventory screen with "+slots.Length.ToString()+" length.");
             GraphicsRegistry.registerRenderGraphic(this);
         }
 

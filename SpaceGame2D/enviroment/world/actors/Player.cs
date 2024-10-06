@@ -73,7 +73,7 @@ namespace SpaceGame2D.enviroment
         /// </summary>
         /// 
 
-        public IStaticPhysicsObject ground { get; set; }
+        public AABBVoxel ground { get; set; }
         public void DisposeGraphic()
         {
             GraphicsRegistry.deregisterWorldRenderGraphic(this.graphic);

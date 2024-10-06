@@ -180,7 +180,7 @@ namespace SpaceGame2D.enviroment.world.actors
 
 
 
-            GL.DrawElements(PrimitiveType.Triangles, GraphicsRegistry.indices_Quad.Length, DrawElementsType.UnsignedInt, 0);
+            GL.DrawElements(PrimitiveType.Triangles, GraphicsRegistry.indices_Quad.Length, DrawElementsType.UnsignedByte, 0);
             //GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
 
 

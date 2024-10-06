@@ -95,7 +95,6 @@ namespace SpaceGame2D.enviroment.blocks.machines
 
             internal_block_positon = position;
             this.grid = grid;
-            Main_PhysicsThread.static_physics_objects.Add(this);
             this.graphic = new RenderQuadGraphic(this, "SpaceGame2D:default", 0);
             HasCollision = true;
         }
@@ -109,9 +108,9 @@ namespace SpaceGame2D.enviroment.blocks.machines
             return grid.RenderOffset;
         }
 
-        public Vector2 position_physics { get => new Vector2(((float)internal_block_positon.X * .5f) + getGridPosition().X, ((float)internal_block_positon.Y * .5f) + getGridPosition().Y); set => this.block_position = new Point((int)value.X, (int)value.Y); } //this allows us to render the block dynamically on screen from a position.
+        public Vector2 position_physics { get => new Vector2(((float)internal_block_positon.X * BlockGrid.size_grid) + getGridPosition().X, ((float)internal_block_positon.Y * BlockGrid.size_grid) + getGridPosition().Y); set => this.block_position = new Point((int)value.X, (int)value.Y); } //this allows us to render the block dynamically on screen from a position.
 
-        public Vector2 graphic_size => new Vector2(.5f, .5f);
+        public Vector2 graphic_size => new Vector2(BlockGrid.size_grid, BlockGrid.size_grid);
 
         public AABB Collider { get => AABB.Size_To_AABB(position_physics, graphic_size); }
         public bool HasCollision { get; set; }
@@ -131,7 +130,6 @@ namespace SpaceGame2D.enviroment.blocks.machines
         public void destruct()
         {
             GraphicsRegistry.deregisterWorldRenderGraphic(this.graphic);
-            Main_PhysicsThread.static_physics_objects.Remove(this);
             HasCollision = false;
             grid.deleteTileLocation(this.internal_block_positon);
             this.grid_private = null;

@@ -14,31 +14,21 @@ namespace SpaceGame2D.utilities.threading
     {
 
 
-        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        //private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
 
         public void AddThreadSafe(T item)
         {
-            _lock.EnterWriteLock();
-            try
+            lock (this)
             {
                 this.Add(item);
-            }
-            finally
-            {
-                _lock.ExitWriteLock();
             }
         }
         public void RemoveThreadSafe(T item)
         {
-            _lock.EnterWriteLock();
-            try
+            lock (this)
             {
                 this.Remove(item);
-            }
-            finally
-            {
-                _lock.ExitWriteLock();
             }
         }
     }

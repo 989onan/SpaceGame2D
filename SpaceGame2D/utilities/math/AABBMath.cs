@@ -133,13 +133,13 @@ namespace SpaceGame2D.utilities.math
             if (Entry.Y < 0.0f)
             {
                 // Check that the bounding box started overlapped or not.
-                Console.WriteLine("no collision here!");
+                //Console.WriteLine("no collision here!");
                 if (original_obj.y_max <= collider.Collider.y_min || original_obj.y_min >= collider.Collider.y_max) return new Tuple<float, Vector2>(1, normal);
             }
-            /*if (entryTime > exitTime || Entry.X < 0.0f && Entry.Y < 0.0f || Entry.X > 1.0f || Entry.Y > 1.0f)
+            if (Entry.X > 1.0f || Entry.Y > 1.0f)
             {
                 return new Tuple<float, Vector2>(1, normal);
-            }*/
+            }
             else // if there was a collision 
             {
                 // calculate normal of collided surface

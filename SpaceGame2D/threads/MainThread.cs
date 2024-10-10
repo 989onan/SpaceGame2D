@@ -67,12 +67,12 @@ namespace SpaceGame2D.threads
 
 
 
-            cur_world = new Planet("Earth", new Point(200, 100), new WorldEnviromentProperties(new Vector2(0, -9.8f), 2));
-            //cur_world = new Planet("Asteroids1", new Point(200, 100), new WorldEnviromentProperties(new Vector2(0, 0f), 0));
+            //cur_world = new Planet("Earth", new Point(200, 100), new WorldEnviromentProperties(new Vector2(0, -9.8f), 2));
+            cur_world = new Planet("Asteroids1", new Point(200, 100), new WorldEnviromentProperties(new Vector2(0, 0f), 0));
 
             Random random = new Random();
-            new WorldGeneratorTerra(random.Next(), cur_world.BlockGrid).generate();
-            //new WorldGeneratorAsteroids(random.Next(), cur_world.BlockGrid).generate();
+            //new WorldGeneratorTerra(random.Next(), cur_world.BlockGrid).generate();
+            new WorldGeneratorAsteroids(random.Next(), cur_world.BlockGrid).generate();
 
 
 

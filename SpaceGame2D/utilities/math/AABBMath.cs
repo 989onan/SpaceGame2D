@@ -1,7 +1,5 @@
 ﻿using SpaceGame2D.enviroment.physics;
-using SpaceGame2D.utilities.threading;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -10,53 +8,27 @@ using System.Threading.Tasks;
 
 namespace SpaceGame2D.utilities.math
 {
-    public class AABBMath<T> where T: ICollideable
+    public class AABBMath<T> where T : ICollideable
     {
-
-        public static IEnumerable<T> CollectCollideableIntercecting(IEnumerable<T> colliders, AABB box)
-        {
-
-            QueueableConcurrentList<T> result = new QueueableConcurrentList<T>();
-
-
-            //chunk our collections to x so we can run multiple lines with x in each.
-            
-            foreach (T collider in colliders) //so we're doing less calculations.
-            {
-
-                if (collider.Collider.Intercects(box))
-                {
-
-                    result.Add(collider);
-                }
-                //Console.WriteLine("we have a static object.");
-
-
-            }
-            result.FlushQueue();
-
-            return result;
-
-        }
         public static IEnumerable<T> SweptAABBScene(IEnumerable<T> colliders, ICollideable original_obj, Vector2 Velocity_dir)
         {
             List<OrderedPlace<T>> orderedPhysics = new List<OrderedPlace<T>>();
             //float remainingtime = 0;
             //Console.WriteLine("Doing swept AABB on "+colliders.Count().ToString()+" colliders. ");
             //chunk our collections to x so we can run multiple lines with x in each.
-            
+
             foreach (T staticPhysicsObject in colliders.Where(o => o != null))
             {
-                
+
 
                 Tuple<float, Vector2> result = SweptAABB(original_obj.Collider, staticPhysicsObject, Velocity_dir);
                 //Console.WriteLine("has potential");
 
                 //if (remainingtime < .01f) remainingtime = 1f;
-                orderedPhysics.Add(new OrderedPlace<T>(result.Item1,staticPhysicsObject));
+                orderedPhysics.Add(new OrderedPlace<T>(result.Item1, staticPhysicsObject));
 
             }
-           
+
 
             orderedPhysics.Sort();
             return orderedPhysics.Select(o => o.obj);

@@ -22,7 +22,7 @@ namespace SpaceGame2D.enviroment
     public class Player: IRenderableObject, IActivePhysicsObject, IStorageObject
     {
 
-        public static readonly float JetPackForce = 10;
+        public static readonly float JetPackForce = 30;
         public StorageContainer inventory { get;}
 
         public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -40,7 +40,7 @@ namespace SpaceGame2D.enviroment
 
 
             this.graphic = new RenderQuadGraphic(this, "SpaceGame2D:default", 3);
-            Main_PhysicsThread.active_physics_objects.Add(this);
+            Main_PhysicsThread.solver.active_physics_objects.Add(this);
             this.IsActive = true;
             inventory = new StorageContainer(48); //4X12
             this.storageScreen = new GridInventoryScreen("SpaceGame2D:default", this, 12);
@@ -109,7 +109,7 @@ namespace SpaceGame2D.enviroment
         public void destruct()
         {
             Main_GraphicsThread._worldGraphicObjects.Remove(this.graphic);
-            Main_PhysicsThread.active_physics_objects.Remove(this);
+            Main_PhysicsThread.solver.active_physics_objects.Remove(this);
             HasCollision = false;
         }
 

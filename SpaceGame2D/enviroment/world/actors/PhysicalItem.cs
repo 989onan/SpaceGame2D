@@ -64,7 +64,7 @@ namespace SpaceGame2D.enviroment.world.actors
             this.source_block = source_block;
             this.graphic = new RenderQuadGraphic(this, "SpaceGame2D:default", 0);
             this.count = 1;
-            Main_PhysicsThread.active_physics_objects.Add(this);
+            Main_PhysicsThread.solver.active_physics_objects.Add(this);
         }
 
         public void destruct()

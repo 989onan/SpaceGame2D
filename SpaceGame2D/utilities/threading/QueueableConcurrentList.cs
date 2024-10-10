@@ -20,7 +20,7 @@ namespace SpaceGame2D.utilities.threading
 
         public new bool Remove(T item)
         {
-            if(RemoveQue.Contains(item) || !this.Contains(item)) return false;
+            if(RemoveQue.Contains(item)) return false;
             RemoveQue.Enqueue(item);
             return true;
         }

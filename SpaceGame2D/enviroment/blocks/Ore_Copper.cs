@@ -40,10 +40,6 @@ namespace SpaceGame2D.enviroment.blocks
         {
             if (!(grid_private == grid))
             {
-                if (grid_private != null)
-                {
-                    grid_private.deleteTileLocation(internal_block_positon);
-                }
                 grid_private = grid;
                 grid_private.setTileLocation(this, internal_block_positon);
             }
@@ -64,7 +60,7 @@ namespace SpaceGame2D.enviroment.blocks
             HasCollision = false;
             internal_block_positon = position;
             this.grid = grid;
-            Main_PhysicsThread.static_physics_objects.Add(this);
+            Main_PhysicsThread.solver.static_physics_objects.Add(this);
             this.graphic = new RenderQuadGraphic(this, "SpaceGame2D:default", 0);
 
         }
@@ -88,7 +84,7 @@ namespace SpaceGame2D.enviroment.blocks
         public void destruct()
         {
             Main_GraphicsThread._worldGraphicObjects.Remove(this.graphic);
-            Main_PhysicsThread.static_physics_objects.Remove(this);
+            Main_PhysicsThread.solver.static_physics_objects.Remove(this);
             HasCollision = false;
             grid.deleteTileLocation(this.internal_block_positon);
             this.grid_private = null;

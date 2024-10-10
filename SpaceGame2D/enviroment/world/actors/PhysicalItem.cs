@@ -31,9 +31,9 @@ namespace SpaceGame2D.enviroment.world.actors
 
         private bool getActive()
         {
-            if (ground == null)
+            if (ground != null)
             {
-                return true;
+                return false;
             }
             return isactive_private;
         }

@@ -102,7 +102,7 @@ namespace SpaceGame2D.threads
                 while (!this.graphics_thread.is_running)
                 {
                     await Task.Delay(1);
-                    Console.WriteLine("waiting for graphics to start!");
+                    //Console.WriteLine("waiting for graphics to start!");
                 }
                 this.is_running = true;
                 while (this.is_running)

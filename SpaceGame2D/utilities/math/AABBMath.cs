@@ -52,10 +52,6 @@ namespace SpaceGame2D.utilities.math
                 Tuple<float, Vector2> result = SweptAABB(original_obj.Collider, staticPhysicsObject, Velocity_dir);
                 //Console.WriteLine("has potential");
 
-                if(result.Item1 >= 1)
-                {
-                    continue;
-                }
                 //if (remainingtime < .01f) remainingtime = 1f;
                 orderedPhysics.Add(new OrderedPlace<T>(result.Item1,staticPhysicsObject));
 
@@ -128,21 +124,22 @@ namespace SpaceGame2D.utilities.math
 
 
 
-            /*if (entryTime > exitTime) return new Tuple<float, Vector2>(1, normal); // This check was correct.
+            if (entryTime > exitTime) return new Tuple<float, Vector2>(1, normal); // This check was correct.
             if (Entry.X < 0.0f && Entry.Y < 0.0f) return new Tuple<float, Vector2>(1, normal);
             if (Entry.X < 0.0f)
             {
-                if (original_obj.x_max < collider.x_min || original_obj.x_min > collider.x_max) return new Tuple<float, Vector2>(1, normal);
+                if (original_obj.x_max <= collider.Collider.x_min || original_obj.x_min >= collider.Collider.x_max) return new Tuple<float, Vector2>(1, normal);
             }
             if (Entry.Y < 0.0f)
             {
                 // Check that the bounding box started overlapped or not.
-                if (original_obj.y_max < collider.y_min || original_obj.y_min > collider.y_max) return new Tuple<float, Vector2>(1, normal);
-            }*/
-            if (entryTime > exitTime || Entry.X < 0.0f && Entry.Y < 0.0f || Entry.X > 1.0f || Entry.Y > 1.0f)
+                Console.WriteLine("no collision here!");
+                if (original_obj.y_max <= collider.Collider.y_min || original_obj.y_min >= collider.Collider.y_max) return new Tuple<float, Vector2>(1, normal);
+            }
+            /*if (entryTime > exitTime || Entry.X < 0.0f && Entry.Y < 0.0f || Entry.X > 1.0f || Entry.Y > 1.0f)
             {
                 return new Tuple<float, Vector2>(1, normal);
-            }
+            }*/
             else // if there was a collision 
             {
                 // calculate normal of collided surface

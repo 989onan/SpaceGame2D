@@ -16,6 +16,8 @@ using SpaceGame2D.enviroment.world;
 using SpaceGame2D.enviroment.world.actors;
 using SpaceGame2D.enviroment;
 using SpaceGame2D.threads.Factory_Threads;
+using SpaceGame2D.enviroment.world.generators;
+
 
 namespace SpaceGame2D.threads
 {
@@ -63,16 +65,18 @@ namespace SpaceGame2D.threads
             selectedCube = new SelectionRedicule("SpaceGame2D:default");
             player = new Player(new Vector2(0,20), SpeciesRegistry.getSpecies("SpaceGame2D:Avali"));
 
-            
 
-            cur_world = new Planet("Earth", new Point(200, 200), new WorldEnviromentProperties(new Vector2(0, -9.8f),2));
-            
+
+            cur_world = new Planet("Earth", new Point(200, 100), new WorldEnviromentProperties(new Vector2(0, -9.8f), 2));
+            //cur_world = new Planet("Asteroids1", new Point(200, 100), new WorldEnviromentProperties(new Vector2(0, 0f), 0));
+
             Random random = new Random();
-            new WorldGenerator(random.Next(), cur_world.BlockGrid).generate();
+            new WorldGeneratorTerra(random.Next(), cur_world.BlockGrid).generate();
+            //new WorldGeneratorAsteroids(random.Next(), cur_world.BlockGrid).generate();
 
 
-            cur_world.BlockGrid.RenderOffset = new Vector2(0, 0f);
-            cur_world.BlockGrid.RecalculateVoxelSimplification();
+
+            //cur_world.BlockGrid.RecalculateVoxelSimplification();
             //player2 = new Player(new Vector2(1f,0f), Avali.instance);
 
 
@@ -95,15 +99,16 @@ namespace SpaceGame2D.threads
             {
 
 
-                if (!this.graphics_thread.is_running)
+                while (!this.graphics_thread.is_running)
                 {
                     await Task.Delay(1);
+                    Console.WriteLine("waiting for graphics to start!");
                 }
                 this.is_running = true;
                 while (this.is_running)
                 {
                     DateTime now = DateTime.Now;
-                    await iterate(now);
+                    iterate(now);
                     last_time = DateTime.Now;
                 }
             });
@@ -141,7 +146,7 @@ namespace SpaceGame2D.threads
             this.is_running = false;
         }
 
-        private async Task iterate(DateTime now)
+        private void iterate(DateTime now)
         {
             double totaltime = (DateTime.Now - this.gamestart).TotalSeconds;
             if (totaltime > 3000)

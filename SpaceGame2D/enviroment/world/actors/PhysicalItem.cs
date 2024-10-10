@@ -43,7 +43,7 @@ namespace SpaceGame2D.enviroment.world.actors
 
 
 
-        public AABBVoxel ground { get; set; }
+        public ICollideable ground { get; set; }
 
         public AABB Collider { get; }
 

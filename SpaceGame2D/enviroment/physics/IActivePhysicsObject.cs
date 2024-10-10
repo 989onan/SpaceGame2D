@@ -16,7 +16,7 @@ namespace SpaceGame2D.enviroment.physics
         
         new Vector2 position_physics { get; set; }
 
-        public AABBVoxel ground { get; set; }
+        public ICollideable ground { get; set; }
 
         Vector2 velocity { get; set; }
 

@@ -2,6 +2,7 @@
 using SpaceGame2D.graphics.compiledshaders;
 using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.graphics.texturemanager.packer;
+using SpaceGame2D.threads.GraphicsThread;
 using SpaceGame2D.utilities.math;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 
+#nullable disable
 namespace SpaceGame2D.graphics.renderables
 {
     public class RenderQuadGraphic : IRenderableWorldGraphic
@@ -31,7 +33,7 @@ namespace SpaceGame2D.graphics.renderables
             this.graphicObject = graphicObject;
             this.order = order;
             shader = ShaderManager.getAll().GetValueOrDefault(shader_program);
-            GraphicsRegistry.registerWorldRenderGraphic(this);
+            Main_GraphicsThread._worldGraphicObjects.Add(this);
         }
 
 
@@ -179,7 +181,7 @@ namespace SpaceGame2D.graphics.renderables
 
         public void destruct()
         {
-            GraphicsRegistry.deregisterWorldRenderGraphic(this);
+            Main_GraphicsThread._worldGraphicObjects.Remove(this);
         }
     }
 }

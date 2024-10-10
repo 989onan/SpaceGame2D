@@ -17,7 +17,10 @@ using SpaceGame2D.enviroment.species;
 using SpaceGame2D.enviroment.blocks;
 using System.Numerics;
 using SpaceGame2D.graphics.renderables;
+using System.Collections.Concurrent;
+using SpaceGame2D.utilities.threading;
 
+#nullable disable
 namespace SpaceGame2D.threads.GraphicsThread
 {
     public class Main_GraphicsThread
@@ -57,6 +60,8 @@ namespace SpaceGame2D.threads.GraphicsThread
             this.Window.FramebufferResize += OnFramebufferResize;
             this.Window.Load += OnLoad;
             this.Window.Unload += OnDispose;
+            this.Window.KeyDown += Main_PhysicsThread.QueueKeyDown;
+            this.Window.KeyUp += Main_PhysicsThread.QueueKeyUp;
             this.Window.Size = new OpenTK.Mathematics.Vector2i(800, 800);
 
             //register shaders
@@ -90,10 +95,11 @@ namespace SpaceGame2D.threads.GraphicsThread
             Atlas.LoadToGPU();
             Atlas.UseImage();
             GraphicsRegistry.LoadBuffers();
-            this.is_running = true;
+            
             window_size = new Vector2(Window.Size.X, Window.Size.Y);
             GL.Viewport(0, 0, Window.Size.X, Window.Size.Y);
-            
+            this.is_running = true;
+
         }
 
         public void Stop()
@@ -110,10 +116,19 @@ namespace SpaceGame2D.threads.GraphicsThread
             window_size = new Vector2(Window.Size.X, Window.Size.Y);
         }
 
+        
+        public static QueueableConcurrentList<IRenderableWorldGraphic> _worldGraphicObjects = new QueueableConcurrentList<IRenderableWorldGraphic>();
+        public static QueueableConcurrentList<IRenderable> _renderableObjects = new QueueableConcurrentList<IRenderable>();
+
+        
+
+
 
         private void Render(FrameEventArgs e)
         {
-            
+            //flush the registering and deregistering queues before starting our frame.
+            _worldGraphicObjects.FlushQueue();
+            _renderableObjects.FlushQueue();
 
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.ClearColor(142f/225f, 202f/255f,1f,1f);
@@ -141,7 +156,7 @@ namespace SpaceGame2D.threads.GraphicsThread
 
             float animation_time = (float)(now-MainThread.Instance.gamestart).TotalSeconds*100;
 
-            foreach (IRenderableWorldGraphic obj in GraphicsRegistry.getAllWorldGraphics())
+            foreach (IRenderableWorldGraphic obj in _worldGraphicObjects)
             {
                 //iterate through all blocks that need to be rendered.
                 if(obj == null) continue;
@@ -150,7 +165,7 @@ namespace SpaceGame2D.threads.GraphicsThread
             }
 
             MainThread.Instance.selectedCube.DrawImage(Zoom, -physics_pos, this.window_size, animation_time);
-            foreach (IRenderable obj in GraphicsRegistry.getAllRenderGraphics())
+            foreach (IRenderable obj in _renderableObjects)
             {
                 //iterate through all graphics and ui that need to be rendered.
                 obj.Draw(animation_time, this.window_size);

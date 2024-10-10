@@ -8,6 +8,8 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
+
+#nullable disable
 namespace SpaceGame2D.enviroment.blocks
 {
     public class BlockGrid
@@ -15,7 +17,7 @@ namespace SpaceGame2D.enviroment.blocks
 
         public static readonly float size_grid = .5f;
 
-        private List<AABBVoxel> voxel_grid = new List<AABBVoxel>();
+        //private List<AABBVoxelBlocks> voxel_grid = new List<AABBVoxelBlocks>();
 
         private IBlock[,] _blocks;
 
@@ -25,16 +27,27 @@ namespace SpaceGame2D.enviroment.blocks
         {
             _blocks = new IBlock[size.X, size.Y];
             this.size = size;
-            RenderOffset = new Vector2(0, 0);
         }
 
-        public Vector2 RenderOffset { get; set; }
+
+        public IBlock[] getFlatBlocks()
+        {
+            IBlock[] new_blocks = new IBlock[(size.X)*(size.Y)];
+            for (int x = 0; x < size.X; x++)
+            {
+                for (int y = 0; y < size.Y; y++)
+                {
+                    new_blocks[x * y] = _blocks[x, y];
+                }
+            }
+            return new_blocks;
+        }
 
         public void RecalculateVoxelSimplification()
         {
-            Main_PhysicsThread.static_physics_objects.RemoveAll(o => this.voxel_grid.Contains(o));
-            this.voxel_grid = AABBVoxel.VoxelizeGrid(this);
-            Main_PhysicsThread.static_physics_objects.AddRange(this.voxel_grid);
+            /*IBlock[] blocks = getFlatBlocks();
+            Main_PhysicsThread.static_physics_objects.RemoveAll(o => blocks.Contains(o));
+            Main_PhysicsThread.static_physics_objects.AddRange(blocks);*/
         }
 
         public Point getTileLocation(IBlock tile)

@@ -3,6 +3,7 @@ using SpaceGame2D.graphics.compiledshaders;
 using SpaceGame2D.graphics.renderables;
 using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.graphics.ui;
+using SpaceGame2D.threads.GraphicsThread;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,7 +43,7 @@ namespace SpaceGame2D.graphics.ui.storage
             position = new Vector2(.05f, .05f);
             GuiScreenSize = new Vector2(.3f, .3f);
             //Console.WriteLine("created an inventory screen with "+slots.Length.ToString()+" length.");
-            GraphicsRegistry.registerRenderGraphic(this);
+            Main_GraphicsThread._renderableObjects.Add(this);
         }
 
 
@@ -83,7 +84,7 @@ namespace SpaceGame2D.graphics.ui.storage
 
         public void destruct()
         {
-            GraphicsRegistry.deregisterRenderGraphic(this);
+            Main_GraphicsThread._renderableObjects.Remove(this);
             graphics.Clear();
         }
 

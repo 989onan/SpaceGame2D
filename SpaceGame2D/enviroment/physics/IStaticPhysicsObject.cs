@@ -10,16 +10,14 @@ using System.Threading.Tasks;
 
 namespace SpaceGame2D.enviroment.physics
 {
-    public interface IStaticPhysicsObject
+    public interface IStaticPhysicsObject: ICollideable
     {
 
         Vector2 position_physics { get;}
 
-        AABB Collider { get; }
 
         void destruct();
-        void TriggerCollideEvent(IActivePhysicsObject physicsObject, Vector2 normal);
 
-        bool HasCollision { get; set; }
+        
     }
 }

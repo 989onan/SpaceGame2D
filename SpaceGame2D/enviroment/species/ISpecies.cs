@@ -13,6 +13,8 @@ namespace SpaceGame2D.enviroment.species
 
         float walk_speed { get; }
 
+        float weight_kg { get; }
+
         float jump_velocity { get; }
 
         float reach_meters {  get; }

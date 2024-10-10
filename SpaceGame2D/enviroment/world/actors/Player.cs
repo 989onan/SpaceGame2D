@@ -6,6 +6,7 @@ using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.graphics.texturemanager.packer;
 using SpaceGame2D.graphics.ui;
 using SpaceGame2D.graphics.ui.storage;
+using SpaceGame2D.threads.GraphicsThread;
 using SpaceGame2D.threads.PhysicsThread;
 using SpaceGame2D.utilities.math;
 using System;
@@ -21,12 +22,12 @@ namespace SpaceGame2D.enviroment
     public class Player: IRenderableObject, IActivePhysicsObject, IStorageObject
     {
 
-
+        public static readonly float JetPackForce = 10;
         public StorageContainer inventory { get;}
 
         public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-
+        public bool JetPackOn { get; set; }
 
 
         public Player(Vector2 position, ISpecies species) {
@@ -35,6 +36,7 @@ namespace SpaceGame2D.enviroment
             this.graphic_size = new Vector2(1f,2f);
             this.position_physics = position;
             this.species = species;
+            this.velocity = Vector2.Zero;
 
 
             this.graphic = new RenderQuadGraphic(this, "SpaceGame2D:default", 3);
@@ -73,10 +75,10 @@ namespace SpaceGame2D.enviroment
         /// </summary>
         /// 
 
-        public AABBVoxel ground { get; set; }
+        public ICollideable ground { get; set; }
         public void DisposeGraphic()
         {
-            GraphicsRegistry.deregisterWorldRenderGraphic(this.graphic);
+            Main_GraphicsThread._worldGraphicObjects.Remove(this.graphic);
         }
 
         public void TriggerCollideEvent(IActivePhysicsObject physicsObject, Vector2 normal)
@@ -102,9 +104,11 @@ namespace SpaceGame2D.enviroment
         public bool HasCollision { get; set; }
 
         public IStorageScreen storageScreen { get; }
+        
+
         public void destruct()
         {
-            GraphicsRegistry.deregisterWorldRenderGraphic(this.graphic);
+            Main_GraphicsThread._worldGraphicObjects.Remove(this.graphic);
             Main_PhysicsThread.active_physics_objects.Remove(this);
             HasCollision = false;
         }

@@ -14,6 +14,9 @@ namespace SpaceGame2D.enviroment.species
         public string standing_image => "species/human/standing.png";
         public string walking_image => "species/human/walk_12_frames.png";
 
+
+        public float weight_kg => 110;
+
         public float walk_speed => 10f;
         public float jump_velocity => 30f;
 

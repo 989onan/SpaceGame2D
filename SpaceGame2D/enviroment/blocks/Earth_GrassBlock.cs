@@ -4,6 +4,7 @@ using SpaceGame2D.enviroment.world.actors;
 using SpaceGame2D.graphics.renderables;
 using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.graphics.texturemanager.packer;
+using SpaceGame2D.threads.GraphicsThread;
 using SpaceGame2D.threads.PhysicsThread;
 using SpaceGame2D.utilities.math;
 using System;
@@ -41,6 +42,10 @@ namespace SpaceGame2D.enviroment.blocks
         {
             if (!(grid_private == grid))
             {
+                if (grid_private != null)
+                {
+                    grid_private.deleteTileLocation(internal_block_positon);
+                }
                 grid_private = grid;
                 grid_private.setTileLocation(this, internal_block_positon);
             }
@@ -58,24 +63,15 @@ namespace SpaceGame2D.enviroment.blocks
 
         private void default_init(BlockGrid grid, Point position)
         {
-            HasCollision = true;
+            HasCollision = false;
             internal_block_positon = position;
             this.grid = grid;
+            Main_PhysicsThread.static_physics_objects.Add(this);
             this.graphic = new RenderQuadGraphic(this, "SpaceGame2D:default", 0);
-            
+
         }
 
-        private Vector2 getGridPosition()
-        {
-            if( grid == null)
-            {
-                return new Vector2(-10000000000, -1000000000);
-
-            }
-            return grid.RenderOffset;
-        }
-
-        public Vector2 position_physics { get => new Vector2(((float)internal_block_positon.X * BlockGrid.size_grid) + getGridPosition().X, ((float)internal_block_positon.Y * BlockGrid.size_grid) + getGridPosition().Y); set => this.block_position = new Point((int)value.X, (int)value.Y); } //this allows us to render the block dynamically on screen from a position.
+        public Vector2 position_physics { get => new Vector2(((float)internal_block_positon.X * BlockGrid.size_grid), ((float)internal_block_positon.Y * BlockGrid.size_grid)); set => this.block_position = new Point((int)value.X, (int)value.Y); } //this allows us to render the block dynamically on screen from a position.
         public Vector2 graphic_size => new Vector2(BlockGrid.size_grid, BlockGrid.size_grid);
 
         public AABB Collider { get => AABB.Size_To_AABB(position_physics, graphic_size); }
@@ -93,7 +89,8 @@ namespace SpaceGame2D.enviroment.blocks
 
         public void destruct()
         {
-            GraphicsRegistry.deregisterWorldRenderGraphic(this.graphic);
+            Main_GraphicsThread._worldGraphicObjects.Remove(this.graphic);
+            Main_PhysicsThread.static_physics_objects.Remove(this);
             HasCollision = false;
             grid.deleteTileLocation(this.internal_block_positon);
             this.grid_private = null;
@@ -102,9 +99,6 @@ namespace SpaceGame2D.enviroment.blocks
         public PhysicalItem Mine()
         {
             Vector2 last_pos = this.position_physics;
-            grid.deleteTileLocation(this.internal_block_positon);
-            this.grid.RecalculateVoxelSimplification();
-            BlockGrid last_grid = grid_private;
             destruct();
             return new PhysicalItem(last_pos, this);
 

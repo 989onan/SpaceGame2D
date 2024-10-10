@@ -1,9 +1,11 @@
 ﻿using OpenTK.Graphics.OpenGL;
 using SpaceGame2D.enviroment.blocks;
+using SpaceGame2D.enviroment.physics;
 using SpaceGame2D.graphics.compiledshaders;
 using SpaceGame2D.graphics.renderables;
 using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.graphics.texturemanager.packer;
+using SpaceGame2D.threads.GraphicsThread;
 using SpaceGame2D.utilities.math;
 using System;
 using System.Collections.Generic;
@@ -14,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace SpaceGame2D.enviroment.world.actors
 {
-    public class SelectionRedicule : IRenderableWorldGraphic
+    public class SelectionRedicule : IRenderableWorldGraphic, ICollideable
     {
 
         public IShader shader { get; private set; }
@@ -49,6 +51,10 @@ namespace SpaceGame2D.enviroment.world.actors
 
 
         public int order => 10;
+
+        public AABB Collider => AABB.Size_To_AABB(GraphicCenterPosition, new Vector2(.1f,.1f));
+
+        public bool HasCollision => true;
 
         //public TextureTileFrame image => UpdateCurrentImage(0f);
 
@@ -196,7 +202,12 @@ namespace SpaceGame2D.enviroment.world.actors
 
         public void destruct()
         {
-            GraphicsRegistry.deregisterWorldRenderGraphic(this);
+            Main_GraphicsThread._worldGraphicObjects.Remove(this);
+        }
+
+        public void TriggerCollideEvent(IActivePhysicsObject physicsObject, Vector2 normal)
+        {
+            return;
         }
     }
 }

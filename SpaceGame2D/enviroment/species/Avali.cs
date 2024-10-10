@@ -17,6 +17,8 @@ namespace SpaceGame2D.enviroment.species
         public float jump_velocity => 7f;
         public float walk_speed => 20f;
 
+        public float weight_kg => 25f;
+
         public float reach_meters => 3f;
         public Avali()
         {

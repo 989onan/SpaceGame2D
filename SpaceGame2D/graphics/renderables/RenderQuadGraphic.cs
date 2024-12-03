@@ -3,7 +3,7 @@ using SpaceGame2D.graphics.compiledshaders;
 using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.graphics.texturemanager.packer;
 using SpaceGame2D.threads.GraphicsThread;
-using SpaceGame2D.utilities.math;
+using SpaceGame2D.utilities.ThreadSafePhysicsSolver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,8 +36,14 @@ namespace SpaceGame2D.graphics.renderables
             Main_GraphicsThread._worldGraphicObjects.Add(this);
         }
 
+        public RenderQuadGraphic(IRenderableObject graphicObject, IShader shader_program, int order)
+        {
+            this.graphicObject = graphicObject;
+            this.order = order;
+            shader = shader_program;
+            Main_GraphicsThread._worldGraphicObjects.Add(this);
+        }
 
-        
 
         public bool DrawImage(float zoom, Vector2 offset, Vector2 window_size, float animation_time)
         {
@@ -151,7 +157,7 @@ namespace SpaceGame2D.graphics.renderables
             GL.BindBuffer(BufferTarget.ArrayBuffer, GraphicsRegistry.VertexBufferObject_Quad);
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, GraphicsRegistry.ElementBufferObject_Quad);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, GraphicsRegistry.indices_Quad.Length * sizeof(uint), GraphicsRegistry.indices_Quad, BufferUsageHint.StreamDraw);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, GraphicsRegistry.indices_Quad.Length * sizeof(byte), GraphicsRegistry.indices_Quad, BufferUsageHint.StreamDraw);
 
 
             OpenTK.Mathematics.Vector3 position_cam = new OpenTK.Mathematics.Vector3(0, 0, .1f);
@@ -173,15 +179,21 @@ namespace SpaceGame2D.graphics.renderables
             return other.order.CompareTo(order);
         }
 
-        public void Draw(float animationtime, Vector2 game_window_size)
+        public bool DrawImage(float animationtime, Vector2 game_window_size)
         {
-            Console.WriteLine("trying to draw world graphic as a IRenderable! DON'T DO THIS EVER!!");
-            DrawImage(1, new Vector2(0, 0), game_window_size, animationtime);
+            Console.WriteLine("trying to draw world graphic as an IRenderable! DON'T DO THIS EVER!!");
+            return DrawImage(1, new Vector2(0, 0), game_window_size, animationtime);
         }
 
         public void destruct()
         {
             Main_GraphicsThread._worldGraphicObjects.Remove(this);
+        }
+
+        public bool DrawImage(Vector2 position, Vector2 size, Vector2 window_size, float animation_time)
+        {
+            Console.WriteLine("trying to draw world graphic as an IRenderable! DON'T DO THIS EVER!!");
+            return DrawImage(1, new Vector2(0, 0), window_size, animation_time);
         }
     }
 }

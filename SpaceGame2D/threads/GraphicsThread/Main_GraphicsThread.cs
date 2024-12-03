@@ -117,6 +117,7 @@ namespace SpaceGame2D.threads.GraphicsThread
         }
 
         
+        
         public static QueueableConcurrentList<IRenderableWorldGraphic> _worldGraphicObjects = new QueueableConcurrentList<IRenderableWorldGraphic>();
         public static QueueableConcurrentList<IRenderable> _renderableObjects = new QueueableConcurrentList<IRenderable>();
 
@@ -168,7 +169,7 @@ namespace SpaceGame2D.threads.GraphicsThread
             foreach (IRenderable obj in _renderableObjects)
             {
                 //iterate through all graphics and ui that need to be rendered.
-                obj.Draw(animation_time, this.window_size);
+                obj.DrawImage(animation_time, this.window_size);
             }
 
 

@@ -26,20 +26,13 @@ namespace SpaceGame2D.graphics.ui.storage
 
         public IShader shader { get; set; }
 
-        public List<RenderItemGraphic> graphics;
-
-
+        public ItemSlot[] slots { get; set; }
         public GridInventoryScreen(string shader, IStorageObject sourceObj, int width)
         {
             this.shader = ShaderManager.getAll().GetValueOrDefault(shader);
-            ItemSlot[] slots = sourceObj.inventory.getSlots();
+            slots = sourceObj.inventory.getSlots();
             height = (int)(slots.Length / (float)width);
             this.width = width;
-            graphics = new List<RenderItemGraphic>();
-            foreach (ItemSlot slot in sourceObj.inventory.getSlots())
-            {
-                graphics.Add(new RenderItemGraphic(this.shader, slot));
-            }
             position = new Vector2(.05f, .05f);
             GuiScreenSize = new Vector2(.3f, .3f);
             //Console.WriteLine("created an inventory screen with "+slots.Length.ToString()+" length.");
@@ -55,10 +48,10 @@ namespace SpaceGame2D.graphics.ui.storage
             
         }
 
-        public void Draw(float animationtime, Vector2 game_window_size)
+        public bool DrawImage(float animationtime, Vector2 game_window_size)
         {
             
-            if(!this.IsVisible) return;
+            if(!this.IsVisible) return false;
             //Console.WriteLine("rendering screen");
             float slot_size;
             if (GuiScreenSize.X > GuiScreenSize.Y)
@@ -74,18 +67,22 @@ namespace SpaceGame2D.graphics.ui.storage
 
             int iteration = 0;
 
-            foreach (RenderItemGraphic item in graphics)
+            foreach (ItemSlot item in slots)
             {
                 //Console.WriteLine(height.ToString());
-                item.DrawSlot(position+new Vector2((iteration % width) * slot_size, ((int)(iteration / width)) * slot_size), new Vector2(slot_size, slot_size), game_window_size, animationtime);
+                if(!item.DrawImage(position+new Vector2((iteration % width) * slot_size, ((int)(iteration / width)) * slot_size), new Vector2(slot_size, slot_size), game_window_size, animationtime))
+                {
+                    return false;
+                }
                 iteration++;
             }
+            return true;
         }
 
         public void destruct()
         {
             Main_GraphicsThread._renderableObjects.Remove(this);
-            graphics.Clear();
+            slots = null;
         }
 
         public void CloseGui()

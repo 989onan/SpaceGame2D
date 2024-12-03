@@ -1,6 +1,4 @@
-﻿using SpaceGame2D.enviroment.physics;
-using SpaceGame2D.utilities.math;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace SpaceGame2D.utilities.threading
+namespace SpaceGame2D.utilities.ThreadSafePhysicsSolver
 {
     public class QueueableOctree2D<T> : Octree2D<T> where T : ICollideable
     {
@@ -19,7 +17,7 @@ namespace SpaceGame2D.utilities.threading
             AddQue.Enqueue(item);
         }
 
-        public QueueableOctree2D(AABB bounds): base(bounds)
+        public QueueableOctree2D(AABB bounds) : base(bounds)
         {
             this.bounds = bounds;
         }

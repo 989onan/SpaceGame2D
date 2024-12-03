@@ -1,4 +1,4 @@
-﻿using SpaceGame2D.enviroment.physics;
+﻿using SpaceGame2D.utilities.math;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SpaceGame2D.utilities.math
+namespace SpaceGame2D.utilities.ThreadSafePhysicsSolver
 {
     public class AABBMath<T> where T : ICollideable
     {
@@ -17,7 +17,7 @@ namespace SpaceGame2D.utilities.math
             //Console.WriteLine("Doing swept AABB on "+colliders.Count().ToString()+" colliders. ");
             //chunk our collections to x so we can run multiple lines with x in each.
 
-            foreach (T staticPhysicsObject in colliders.Where(o => o != null))
+            foreach (T staticPhysicsObject in colliders.Where(o => o != null && o.HasCollision))
             {
 
 

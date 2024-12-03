@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SpaceGame2D.enviroment.storage
 {
-    public class StorageContainer
+    public class StorageContainer //not threading safe!
     {
         public int length => slots.Length;
 
@@ -46,14 +46,14 @@ namespace SpaceGame2D.enviroment.storage
         public void AddToAny(ItemSlot slot, Direction inserting_from = Direction.Up) 
         {
 
-            foreach (ItemSlot slot_in_ourselves in slots.Where((slot) => slot.stored != null))
+            foreach (ItemSlot slot_in_ourselves in slots)
             {
                 slot_in_ourselves.addItems(slot, inserting_from);
                 if (!(slot.count > 0)) return;
             }
 
             //add the rest to new slots
-            foreach (ItemSlot slot_in_ourselves in slots.Where((slot) => slot.stored == null))
+            foreach (ItemSlot slot_in_ourselves in slots)
             {
                 slot_in_ourselves.addItems(slot, inserting_from);
                 if (!(slot.count > 0)) return;
@@ -69,14 +69,7 @@ namespace SpaceGame2D.enviroment.storage
         public void RemoveFromAny(ItemSlot slot, Direction inserting_from = Direction.Up)
         {
 
-            foreach (ItemSlot slot_in_ourselves in slots.Where((slot) => slot.stored != null))
-            {
-                slot_in_ourselves.grabIntoStack(slot, inserting_from);
-                if (!(slot.count == slot.max)) return;
-            }
-
-            //add the rest to new slots
-            foreach (ItemSlot slot_in_ourselves in slots.Where((slot) => slot.stored == null))
+            foreach (ItemSlot slot_in_ourselves in slots)
             {
                 slot_in_ourselves.grabIntoStack(slot, inserting_from);
                 if (!(slot.count == slot.max)) return;

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SpaceGame2D.graphics.renderables
 {
-    public interface IRenderableWorldGraphic: IRenderable
+    public interface IRenderableWorldGraphic: IPositionedRenderable
     {
 
         //void LoadGraphic();

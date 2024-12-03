@@ -1,59 +1,116 @@
 ﻿using OpenTK.Graphics.ES11;
+using SpaceGame2D.enviroment.blocks;
 using SpaceGame2D.enviroment.blocks.machines;
+using SpaceGame2D.enviroment.storage;
+using SpaceGame2D.utilities.math;
+using SpaceGame2D.utilities.threading;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
-using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace SpaceGame2D.threads.Factory_Threads
 {
     public class FactorySubThread
     {
 
-        public LinkedList<IMachine> machines = new LinkedList<IMachine>();
+        public List<IMachine> machines = new List<IMachine>();
 
-        public int seconds_recognized = 0;
+        public IStorageObject inputStorage = null;
+        public IStorageObject outputStorage = null;
 
-        public int seconds_not_processed => ((int)(DateTime.Now-MainThread.Instance.gamestart).TotalSeconds) - seconds_recognized;
+        public int seconds_not_processed => ((int)(DateTime.Now - MainThread.Instance.gamestart).TotalSeconds - seconds_recognized);
+        public int seconds_recognized { get; private set;}
 
         //public IMachine startscan { get; set; } 
+
+        private DateTime LastTime;
+        private DateTime ThisTime;
         
-        
-        public Thread Thread { get; private set; }
+        public Task IterationTask { get; private set; }
 
         public bool is_running = false;
+        private IEnumerable<ModifiableTuple2Diff<ModifiableTuple2<Dictionary<string, int>>, int>> processors;
 
         public FactorySubThread(IMachine start_scan) {
-            //this.startscan = start_scan;
-            this.Thread = new Thread(() =>
+            seconds_recognized = 0; //this is needed or setting it later with seconds_not_recognized throws a not initalized error!
+            this.IterationTask = new Task(() =>
             {
+                seconds_recognized = seconds_not_processed;
                 while (is_running) //this may throw an error.
                 {
-                    if (seconds_not_processed > seconds_recognized)
+                    ThisTime = DateTime.Now;
+                    iterate();
+                    LastTime = DateTime.Now;
+                    
+
+                    if ((TimeSpan.FromSeconds(1) - (LastTime - ThisTime)).TotalSeconds <= 0)
                     {
-                        iterate();
-                        seconds_recognized++;
+                        Console.WriteLine("Machine group of size \"" + machines.Count().ToString() + "\" is causing CPU lag out the wazoo!! It's thread is running \""+ seconds_not_processed.ToString() + " seconds behind! ");
                     }
-                    if(seconds_not_processed - seconds_recognized > 10)
+                    else
                     {
-                        Console.WriteLine("Machine group of size \"" + machines.Count().ToString() + "\" is causing CPU lag out the wazoo!! It's thread is running \""+(((int)seconds_not_processed) - seconds_recognized).ToString()+" seconds behind! ");
-                    }
-                    if (this == null) //I have no clue if this will be an issue.
-                    {
-                        break;
+                        Task.Delay((TimeSpan.FromSeconds(1) - (LastTime - ThisTime)));
                     }
                 }
             });
-            machines.AddFirst(start_scan);
-
-            recursive_find_machines(machines);
+            machines.Add(start_scan);
+            Recalculate();
+            
 
             is_running = true;
-            this.Thread.Start();
+            RecalcRecipeSelectors();
+            this.IterationTask.Start();
             MainThread.factories.Add(this);
 
+        }
+
+        public void RecalcRecipeSelectors() {
+            ConcurrentBag<ModifiableTuple2<Dictionary<string, int>>> processors_bag = new ConcurrentBag<ModifiableTuple2<Dictionary<string, int>>>();
+            machines.AsParallel().ForAll(o =>
+            {
+                processors_bag.Add(o.ProcessingTypes.ElementAt(o.selected_recipe));
+            });
+
+            List<ModifiableTuple2<Dictionary<string, int>>> processors_temp = processors_bag.ToList();
+
+            processors = processors_temp.GroupDistincts();
+        }
+
+        public void Recalculate()
+        {
+            
+            FactorySubThread.GetMachines(machines);
+            if(machines.Select(o => o.source_factory).Distinct().Count() > 1)
+            {
+                machines.AsParallel().ForAll(o => {
+                    o.source_factory.is_running = false;
+                    o.source_factory = this;
+                    });
+            }
+            
+        }
+
+        public static List<IMachine> GetMachines(List<IMachine> current_machines)
+        {
+            foreach (IMachine item in current_machines)
+            {
+                IEnumerable<IMachine> new_machines = item.grid.getAxies(item.block_position).OfType<IMachine>();
+
+                foreach(IMachine machine in new_machines)
+                {
+                    if (!current_machines.Contains(machine))
+                    {
+                        current_machines.Add(machine);
+                        GetMachines(current_machines);
+                    }
+                }
+            }
+            return current_machines;
         }
 
         ~FactorySubThread()
@@ -62,70 +119,11 @@ namespace SpaceGame2D.threads.Factory_Threads
             this.is_running = false;
         }
 
-        //TODO: How should we determine how to start the position of a machine group scan, and how do we split machines
-        //if the group splits in half?
-        //like, if a machine line gets split in half, how do we create new threads, and how do we implement scanning better?
-        //look this up when I get internet, for now, splitting groups causes issues. - @989onan
-        public void recursive_find_machines(LinkedList<IMachine> machines_changed)
-        {
-            bool flag = false; //did we find a new machine?
-            foreach (IMachine machine in machines_changed) {
-                List<IMachine> nextMachines = machine.Links();
-
-                if (!machines_changed.Contains(machine))
-                {
-                    machines_changed.AddLast(machine);
-                    flag = true;
-                }
-
-                foreach (IMachine linkedMachine in nextMachines)
-                {
-                    if (!machines_changed.Contains(linkedMachine))
-                    {
-                        machines_changed.AddLast(linkedMachine);
-                        flag = true;
-                    }
-                }
-                machine.links_changed = false;
-                
-            }
-            if (!flag)
-            {
-                return; //return if we didn't add any new machines, meaning we found the end of our massive contraption.
-            }
-            recursive_find_machines(machines_changed);
-        }
-
         public void iterate()
         {
 
 
             //first, recalculate our grid if a machine has reported that we have to recalculate our machine grid, or one of our machines disappeared from the grid.
-            List<IMachine> machines_old = machines.Where(o => (o != null)).Where(o => o.grid != null).ToList();
-            if (machines_old.Where((o) => o.links_changed).Count() > 0 || machines_old.Count() != machines.Count())
-            {
-                Console.WriteLine("Machine thread group has found a moved or changed machine, recalculating machine group!");
-                LinkedList<IMachine> new_machines = new LinkedList<IMachine>(machines_old);
-                LinkedList<IMachine> new_machines_2 = new LinkedList<IMachine>();
-                foreach (IMachine machine in new_machines.Where(o => !o.links_changed))
-                {
-                    new_machines_2.AddLast(machine);
-
-
-                }
-                foreach (IMachine machine in new_machines.Where(o => o.links_changed))
-                {
-                    //if we iterate through the new machines, and their links are updated through the recursion, they will be unchanged again.
-                    //this is why this if statement is here, basically redundancy.
-                    if (machine.links_changed)
-                    {
-                        
-                        recursive_find_machines(new_machines_2);
-                        break;
-                    }
-                }
-                machines = new_machines_2;
-            }
 
             
             if(!(machines.Count() > 0))
@@ -136,12 +134,79 @@ namespace SpaceGame2D.threads.Factory_Threads
             }
             Console.WriteLine("Ticking machine thread group of size: " + machines.Count().ToString());
             //iterate all machines in no particular order.
-            foreach (IMachine machine in machines)
-            {
-                machine.Iterate();
-            }
 
+            //TODO: Remake this to iterate the machine group for input and output item and power lists instead, rather than every machine individually - @989onan
             
+            List<ItemSlot> slots_input = new List<ItemSlot>();
+
+            //foreach (ModifiableTuple2Diff<ModifiableTuple2<Dictionary<string, int>>, int> list in processors)
+            //{
+            //    foreach(KeyValuePair<string, int> Item_iteration in list.Item1.Item1)
+            //    {
+            //        ItemSlot item_input = slots_input.Where(o => o.stored != null).ToList().Find(o => o.stored.Name == Item_iteration.Key);
+            //        if(item_input == null)
+            //        {
+            //            item_input = new ItemSlot(null, 0);
+            //            slots_input.Add(item_input);
+            //        }
+            //        item_input.max += list.Item2;
+            //    }   
+                
+            //    //inputStorage.inventory.TryTakeAll() list.Item1
+            //}
+            //if (this.inputStorage.inventory.TryTakeAll(slots_input.ToArray()))
+            //{
+            //    Console.WriteLine("consuming items");
+            //    slots_input.ForEach(o => o.count = 0);
+            //    slots_input.ForEach(o => {
+            //        this.inputStorage.inventory.RemoveFromAny(o);
+                    
+            //    }); 
+            //    if(slots_input.Any(o=>o.max != o.count))
+            //    {
+            //        throw new Exception("List of items was modified inside of container during taking.");
+            //    }
+                
+            //}
+            //else
+            //{
+            //    return;
+            //}
+
+            //List<ItemSlot> slots_output = new List<ItemSlot>();
+            //foreach (ModifiableTuple2Diff<ModifiableTuple2<Dictionary<string, int>>, int> list in processors)
+            //{
+            //    foreach (KeyValuePair<string, int> Item_iteration in list.Item1.Item2)
+            //    {
+            //        ItemSlot item_input = slots_output.Where(o => o.stored != null).ToList().Find(o => o.stored.Name == Item_iteration.Key);
+            //        if (item_input == null)
+            //        {
+            //            item_input = new ItemSlot(null, 0);
+            //            slots_output.Add(item_input);
+            //        }
+            //        item_input.max += list.Item2;
+            //    }
+
+            //    //inputStorage.inventory.TryTakeAll() list.Item1
+            //}
+
+            //if (this.inputStorage.inventory.TryPutAll(slots_input.ToArray()))
+            //{
+            //    Console.WriteLine("consuming items");
+            //    slots_input.ForEach(o => o.count = o.max);
+            //    slots_input.ForEach(o => {
+            //        this.inputStorage.inventory.AddToAny(o);
+            //    });
+            //    if (slots_input.Any(o => 0 != o.count))
+            //    {
+            //        throw new Exception("List of items was modified inside of container during taking.");
+            //    }
+
+            //}
+            //else
+            //{
+            //    return;
+            //}
         }
     }
 }

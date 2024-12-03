@@ -1,4 +1,5 @@
-﻿using SpaceGame2D.threads.PhysicsThread;
+﻿using SpaceGame2D.enviroment.blocks;
+using SpaceGame2D.threads.PhysicsThread;
 using SpaceGame2D.utilities.math;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 
 #nullable disable
-namespace SpaceGame2D.enviroment.blocks
+namespace SpaceGame2D.enviroment.world
 {
     public class BlockGrid
     {
@@ -32,7 +33,7 @@ namespace SpaceGame2D.enviroment.blocks
 
         public IBlock[] getFlatBlocks()
         {
-            IBlock[] new_blocks = new IBlock[(size.X)*(size.Y)];
+            IBlock[] new_blocks = new IBlock[size.X * size.Y];
             for (int x = 0; x < size.X; x++)
             {
                 for (int y = 0; y < size.Y; y++)
@@ -52,7 +53,7 @@ namespace SpaceGame2D.enviroment.blocks
 
         public Point getTileLocation(IBlock tile)
         {
-            if(tile == null)
+            if (tile == null)
             {
                 return new Point(0, 0);
             }
@@ -71,17 +72,17 @@ namespace SpaceGame2D.enviroment.blocks
 
         public IBlock getTileAt(Point position)
         {
-            return _blocks[position.X%size.X, position.Y%size.Y];
+            return _blocks[position.X % size.X, position.Y % size.Y];
         }
 
         public IBlock getTileAt(int x, int y)
         {
-            if (x >= this.size.X || y >= this.size.Y)
+            if (x >= size.X || y >= size.Y)
             {
                 return null;
             }
             return _blocks[x, y];
-            
+
         }
 
         public List<IBlock> gatherArea(Point Min, Point Max)
@@ -92,9 +93,9 @@ namespace SpaceGame2D.enviroment.blocks
             List<IBlock> blocks = new List<IBlock>();
             for (int i = trueMin.X; i < trueMax.X; i++)
             {
-                for(int j = trueMin.Y; j < trueMax.Y; j++)
+                for (int j = trueMin.Y; j < trueMax.Y; j++)
                 {
-                    blocks.Add(getTileAt(i,j));
+                    blocks.Add(getTileAt(i, j));
                 }
             }
             return blocks;
@@ -104,11 +105,11 @@ namespace SpaceGame2D.enviroment.blocks
         {
             List<IBlock> blocks = new List<IBlock>();
 
-            
 
-            for(int i = 0; i < distance; i++)
+
+            for (int i = 0; i < distance; i++)
             {
-                blocks.Add(getTileAt(position+((Size)DirectionMethods.Direct(directions)))); // TODO: THIS IS WRONG! - @989onan89
+                blocks.Add(getTileAt(position + (Size)DirectionMethods.Direct(directions))); // TODO: THIS IS WRONG! - @989onan89
             }
 
             return blocks;
@@ -122,16 +123,16 @@ namespace SpaceGame2D.enviroment.blocks
             }
             tile.grid = this;
             _blocks[value.X, value.Y] = tile;
-            
+
         }
 
         public void deleteTileLocation(Point value)
         {
             if (_blocks[value.X, value.Y] != null)
             {
-                
+
                 _blocks[value.X, value.Y] = null;
-                
+
             }
         }
     }

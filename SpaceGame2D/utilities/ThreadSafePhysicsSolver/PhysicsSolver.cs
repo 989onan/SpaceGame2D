@@ -1,16 +1,14 @@
 ﻿using SpaceGame2D.enviroment.blocks;
-using SpaceGame2D.enviroment.physics;
 using SpaceGame2D.threads;
-using SpaceGame2D.utilities.math;
 using SpaceGame2D.utilities.threading;
 using System.Numerics;
 
-namespace SpaceGame2D.utilities.physicsSolver
+namespace SpaceGame2D.utilities.ThreadSafePhysicsSolver 
 {
     public class PhysicsSolver<A,B> where B: IActivePhysicsObject where A : ICollideable
     {
-        public QueueableConcurrentList<B> active_physics_objects = new QueueableConcurrentList<B>();
-        public QueueableOctree2D<A> static_physics_objects;
+        private QueueableConcurrentList<B> active_physics_objects = new QueueableConcurrentList<B>();
+        private QueueableOctree2D<A> static_physics_objects;
         public PhysicsSolver(AABB worldstaticSize)
         {
             static_physics_objects = new QueueableOctree2D<A>(worldstaticSize);
@@ -18,6 +16,35 @@ namespace SpaceGame2D.utilities.physicsSolver
 
         }
 
+        public IEnumerable<A> FindStaticPhysics(AABB area)
+        {
+            return static_physics_objects.FindCollisions(area);
+        }
+
+        public void QueueAddStatic(A a)
+        {
+            static_physics_objects.Add(a);
+        }
+
+        public bool QueueRemoveStatic(A a)
+        {
+            return static_physics_objects.Remove(a);
+        }
+
+        public void QueueAddActive(B a)
+        {
+            active_physics_objects.Add(a);
+        }
+
+        public bool QueueRemoveActive(B a)
+        {
+            return active_physics_objects.Remove(a);
+        }
+
+        public int ActiveCount()
+        {
+            return active_physics_objects.Count();
+        }
 
 
         public void iterate(TimeSpan deltaTime)
@@ -46,7 +73,7 @@ namespace SpaceGame2D.utilities.physicsSolver
                 //TODO: This will become excruciatingly slow if there is a lot of resting active physics objects possibly. fix this and reimplement maybe?
                 //List<IStaticPhysicsObject> static_physics_potential = new List<IStaticPhysicsObject>(await AABBMath<IStaticPhysicsObject>.CollectCollideableIntercecting(staticPhysicsObjects, BroadPhase));
 
-                List<A> static_physics_potential = static_physics_objects.FindCollisions(BroadPhase).ToList();
+                List<A> static_physics_potential = this.FindStaticPhysics(BroadPhase).ToList();
 
 
 

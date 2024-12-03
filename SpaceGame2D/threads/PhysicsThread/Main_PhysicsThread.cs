@@ -5,13 +5,12 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using SpaceGame2D.enviroment;
 using SpaceGame2D.enviroment.blocks;
-using SpaceGame2D.enviroment.physics;
 using SpaceGame2D.enviroment.species;
 using SpaceGame2D.enviroment.world;
 using SpaceGame2D.enviroment.world.actors;
 using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.utilities.math;
-using SpaceGame2D.utilities.physicsSolver;
+using SpaceGame2D.utilities.ThreadSafePhysicsSolver;
 using SpaceGame2D.utilities.threading;
 using System;
 using System.Collections.Concurrent;
@@ -28,7 +27,7 @@ using System.Threading.Tasks;
 namespace SpaceGame2D.threads.PhysicsThread
 {
 
-    
+
     public class Main_PhysicsThread
     {
 
@@ -75,7 +74,7 @@ namespace SpaceGame2D.threads.PhysicsThread
                     if ((millisecond_clock - delta_times_secs).TotalSeconds < 0f && baked)
                     {
 
-                        Console.WriteLine("Physics engine has been saturated at a capacity of: " + solver.active_physics_objects.Count().ToString() + " skipping!");
+                        Console.WriteLine("Physics engine has been saturated at a capacity of: " + solver.ActiveCount().ToString() + " skipping!");
                         last_time = now + millisecond_clock;
                         //return;
                     }
@@ -153,7 +152,7 @@ namespace SpaceGame2D.threads.PhysicsThread
             else
             {
                 float jetpackvel = (Player.JetPackForce / species.weight_kg)*delta_times_secs;
-                Console.WriteLine(jetpackvel);
+                //Console.WriteLine(jetpackvel);
                 if (window.IsKeyDown(Keys.D))
                 {
                     vel = new Vector2(jetpackvel + vel.X, vel.Y);
@@ -214,7 +213,7 @@ namespace SpaceGame2D.threads.PhysicsThread
             MainThread.Instance.graphics_thread.PhysicalMousePosition = MouseClamped + MainThread.Instance.player.position_physics;
 
             //get voxels that are actually blocks.
-            IEnumerable<IBlock> collection = solver.static_physics_objects.FindCollisions(new AABB(MainThread.Instance.player.Collider).ExtendByVector(MouseClamped)).OfType<IBlock>();
+            IEnumerable<IBlock> collection = solver.FindStaticPhysics(new AABB(MainThread.Instance.player.Collider).ExtendByVector(MouseClamped)).OfType<IBlock>();
             IEnumerable<IBlock> ray_intercection = AABBMath<IBlock>.SweptAABBScene(collection, MainThread.Instance.player, new Vector2(
                 MouseClamped.X,
 

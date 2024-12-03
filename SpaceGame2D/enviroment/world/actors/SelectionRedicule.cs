@@ -1,12 +1,11 @@
 ﻿using OpenTK.Graphics.OpenGL;
 using SpaceGame2D.enviroment.blocks;
-using SpaceGame2D.enviroment.physics;
 using SpaceGame2D.graphics.compiledshaders;
 using SpaceGame2D.graphics.renderables;
 using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.graphics.texturemanager.packer;
 using SpaceGame2D.threads.GraphicsThread;
-using SpaceGame2D.utilities.math;
+using SpaceGame2D.utilities.ThreadSafePhysicsSolver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -208,6 +207,18 @@ namespace SpaceGame2D.enviroment.world.actors
         public void TriggerCollideEvent(IActivePhysicsObject physicsObject, Vector2 normal)
         {
             return;
+        }
+
+        public bool DrawImage(Vector2 position, Vector2 size, Vector2 window_size, float animation_time)
+        {
+            Console.WriteLine("Drawing Selection redicule via draw render graphic! Don't do this!");
+            return DrawImage(1, Vector2.Zero, Vector2.One, animation_time);
+        }
+
+        public bool DrawImage(float animationtime, Vector2 game_window_size)
+        {
+            Console.WriteLine("Drawing Selection redicule via draw render graphic! Don't do this!");
+            return DrawImage(1, Vector2.Zero, Vector2.One, animationtime);
         }
     }
 }

@@ -18,9 +18,13 @@
     <None Update="graphics\textures\**">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+	  <None Update="lang\**">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="enviroment\physics\" />
     <Folder Include="enviroment\universe\" />
     <Folder Include="graphics\textures\ui\storage\" />
     <Folder Include="threads\awaiters\" />

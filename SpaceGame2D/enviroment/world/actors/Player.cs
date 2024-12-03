@@ -1,5 +1,4 @@
-﻿using SpaceGame2D.enviroment.physics;
-using SpaceGame2D.enviroment.species;
+﻿using SpaceGame2D.enviroment.species;
 using SpaceGame2D.enviroment.storage;
 using SpaceGame2D.graphics.renderables;
 using SpaceGame2D.graphics.texturemanager;
@@ -8,7 +7,7 @@ using SpaceGame2D.graphics.ui;
 using SpaceGame2D.graphics.ui.storage;
 using SpaceGame2D.threads.GraphicsThread;
 using SpaceGame2D.threads.PhysicsThread;
-using SpaceGame2D.utilities.math;
+using SpaceGame2D.utilities.ThreadSafePhysicsSolver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,7 +39,7 @@ namespace SpaceGame2D.enviroment
 
 
             this.graphic = new RenderQuadGraphic(this, "SpaceGame2D:default", 3);
-            Main_PhysicsThread.solver.active_physics_objects.Add(this);
+            Main_PhysicsThread.solver.QueueAddActive(this);
             this.IsActive = true;
             inventory = new StorageContainer(48); //4X12
             this.storageScreen = new GridInventoryScreen("SpaceGame2D:default", this, 12);
@@ -109,7 +108,7 @@ namespace SpaceGame2D.enviroment
         public void destruct()
         {
             Main_GraphicsThread._worldGraphicObjects.Remove(this.graphic);
-            Main_PhysicsThread.solver.active_physics_objects.Remove(this);
+            Main_PhysicsThread.solver.QueueRemoveActive(this);
             HasCollision = false;
         }
 

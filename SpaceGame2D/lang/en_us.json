@@ -1,0 +1,11 @@
+{
+  "authors": [ "989onan" ],
+  "messages": {
+    "SpaceGame2D:CopperCrate": "Copper Crate",
+    "SpaceGame2D:EarthDirt": "Earth Dirt",
+    "SpaceGame2D:EarthGrass": "Earth Grass",
+    "SpaceGame2D:CopperOre": "Copper Ore",
+    "SpaceGame2D:StoneGeneric": "Stone",
+    "SpaceGame2D:Generator_1": "Generator Tier 1"
+  }
+}

@@ -8,16 +8,16 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SpaceGame2D.enviroment.physics
+namespace SpaceGame2D.utilities.ThreadSafePhysicsSolver
 {
-    public interface IStaticPhysicsObject: ICollideable
+    public interface IStaticPhysicsObject : ICollideable
     {
 
-        Vector2 position_physics { get;}
+        Vector2 position_physics { get; }
 
 
         void destruct();
 
-        
+
     }
 }

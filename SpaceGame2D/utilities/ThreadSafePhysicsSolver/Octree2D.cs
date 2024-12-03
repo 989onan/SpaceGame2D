@@ -1,6 +1,4 @@
-﻿using SpaceGame2D.enviroment.physics;
-using SpaceGame2D.utilities.math;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -8,11 +6,11 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace SpaceGame2D.utilities.threading
+namespace SpaceGame2D.utilities.ThreadSafePhysicsSolver
 {
 
     //Thanks to Omni's Hackpad for this!
-    public class Octree2D<T> where T: ICollideable
+    public class Octree2D<T> where T : ICollideable
     {
         public int resolution;
 
@@ -26,7 +24,7 @@ namespace SpaceGame2D.utilities.threading
         public List<T> _elements = new List<T>(_BucketCapacity); //so that we don't have to do expansion internally all the time unless needed so it's a little faster
 
         public AABB bounds;
-        # nullable enable
+#nullable enable
         private Octree2D<T>? _upperLeft;
         private Octree2D<T>? _upperRight;
         private Octree2D<T>? _lowerLeft;
@@ -35,14 +33,15 @@ namespace SpaceGame2D.utilities.threading
 
         public Octree2D()
         {
-            this.bounds = new AABB(0, 0, 1, 1);
+            bounds = new AABB(0, 0, 1, 1);
         }
 
-        public Octree2D(AABB bounds) {
+        public Octree2D(AABB bounds)
+        {
             this.bounds = bounds;
         }
 
-        
+
         public Octree2D(AABB bounds, int Level)
         {
             this.bounds = bounds;
@@ -51,14 +50,14 @@ namespace SpaceGame2D.utilities.threading
 
         public void Add(T obj)
         {
-            if(obj == null) throw new ArgumentNullException(nameof(obj));
-            if (!this.bounds.ContainsFully(obj.Collider))
+            if (obj == null) throw new ArgumentNullException(nameof(obj));
+            if (!bounds.ContainsFully(obj.Collider))
             {
                 Console.WriteLine("Cannot add object to physics tree because it is outside of the world size! Discarding!!!");
                 Console.WriteLine(obj.Collider.ToString());
             }
 
-            if(this._elements.Count() >= _BucketCapacity)
+            if (_elements.Count() >= _BucketCapacity)
             {
                 Split();
             }
@@ -78,7 +77,7 @@ namespace SpaceGame2D.utilities.threading
 
         public Octree2D<T>? GetContainingChild(AABB collider)
         {
-            if(_upperLeft != null)
+            if (_upperLeft != null)
             {
                 //Console.WriteLine("upper left: "+_upperLeft.bounds.ToString());
                 if (_upperLeft.bounds.ContainsFully(collider))
@@ -118,15 +117,15 @@ namespace SpaceGame2D.utilities.threading
             if (!IsLeaf) return;
             if (Level + 1 > _MaxDepth) return;
             //Console.WriteLine("splitting octree!");
-            _lowerRight = new Octree2D<T>(new AABB(this.bounds.Center, this.bounds.Maximum), Level + 1);
-            _upperLeft = new Octree2D<T>(new AABB(this.bounds.Minimum, this.bounds.Center), Level + 1);
-            
-            _lowerLeft = new Octree2D<T>(new AABB(new Vector2(this.bounds.Center.Y,this.bounds.Minimum.X), new Vector2(this.bounds.Center.X, this.bounds.Maximum.Y)), Level+1);
-            _upperRight = new Octree2D<T>(new AABB(new Vector2(this.bounds.Center.X, this.bounds.Minimum.Y), new Vector2(this.bounds.Maximum.X, this.bounds.Center.Y)), Level + 1);
-            T[] old_elements = this._elements.ToArray();
+            _lowerRight = new Octree2D<T>(new AABB(bounds.Center, bounds.Maximum), Level + 1);
+            _upperLeft = new Octree2D<T>(new AABB(bounds.Minimum, bounds.Center), Level + 1);
+
+            _lowerLeft = new Octree2D<T>(new AABB(new Vector2(bounds.Center.Y, bounds.Minimum.X), new Vector2(bounds.Center.X, bounds.Maximum.Y)), Level + 1);
+            _upperRight = new Octree2D<T>(new AABB(new Vector2(bounds.Center.X, bounds.Minimum.Y), new Vector2(bounds.Maximum.X, bounds.Center.Y)), Level + 1);
+            T[] old_elements = _elements.ToArray();
             foreach (T item in old_elements)
             {
-                
+
                 Octree2D<T>? containingChild = GetContainingChild(item.Collider);
                 //Console.WriteLine((containingChild != null).ToString());
                 if (containingChild != null)
@@ -141,11 +140,11 @@ namespace SpaceGame2D.utilities.threading
 
         private int CountElements()
         {
-            if(this.IsLeaf) return _elements.Count();
+            if (IsLeaf) return _elements.Count();
             else
             {
                 int count = 0;
-                if(_upperLeft != null)
+                if (_upperLeft != null)
                 {
                     count += _upperLeft.CountElements();
                 }
@@ -164,7 +163,7 @@ namespace SpaceGame2D.utilities.threading
                 return count;
             }
 
-            
+
 
 
         }
@@ -177,7 +176,7 @@ namespace SpaceGame2D.utilities.threading
 
             bool removed = containingChild?.Remove(obj) ?? _elements.Remove(obj);
 
-            if(removed && CountElements() <= _BucketCapacity)
+            if (removed && CountElements() <= _BucketCapacity)
             {
                 Merge();
             }
@@ -188,7 +187,7 @@ namespace SpaceGame2D.utilities.threading
         private void Merge()
         {
             if (IsLeaf) return;
-            if(_upperLeft != null)
+            if (_upperLeft != null)
             {
                 _elements.AddRange(_upperLeft._elements);
             }
@@ -218,7 +217,7 @@ namespace SpaceGame2D.utilities.threading
 
             nodes.Enqueue(this);
 
-            while ( nodes.Count > 0)
+            while (nodes.Count > 0)
             {
                 Octree2D<T> node = nodes.Dequeue();
                 if (!collider.Intercects(node.bounds)) continue;
@@ -263,6 +262,6 @@ namespace SpaceGame2D.utilities.threading
             return result;
         }
     }
-    #nullable disable
+#nullable disable
 
 }

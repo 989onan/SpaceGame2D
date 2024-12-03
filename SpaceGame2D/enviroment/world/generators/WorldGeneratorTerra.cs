@@ -74,7 +74,7 @@ namespace SpaceGame2D.enviroment.world.generators
                         double y_doub = y;
                         if (Math.Abs(noiser_ore.Noise(i_doub / 10, y_doub / 10, 0) * ore_frequency) > 1)
                         {
-                            new Ore_Copper(grid, new Point(i, y));
+                            new Copper_Ore(grid, new Point(i, y));
                         }
                         else
                         {

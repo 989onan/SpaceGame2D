@@ -14,6 +14,6 @@ namespace SpaceGame2D.graphics.renderables
 
         void destruct();
         int order { get; }
-        public void Draw(float animationtime, Vector2 game_window_size);
+        public bool DrawImage(float animationtime, Vector2 game_window_size);
     }
 }

@@ -3,7 +3,6 @@ using SpaceGame2D.graphics.renderables;
 using SpaceGame2D.graphics.texturemanager.packer;
 using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.threads.PhysicsThread;
-using SpaceGame2D.utilities.math;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -11,17 +10,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
-using SpaceGame2D.enviroment.physics;
 using SpaceGame2D.enviroment.storage;
 using SpaceGame2D.graphics.ui;
 using SpaceGame2D.graphics.ui.storage;
 using SpaceGame2D.enviroment.blocks.machines;
 using SpaceGame2D.threads.Factory_Threads;
 using SpaceGame2D.threads.GraphicsThread;
+using SpaceGame2D.utilities.ThreadSafePhysicsSolver;
+using SpaceGame2D.enviroment.world;
+using SpaceGame2D.enviroment.resources;
 
 namespace SpaceGame2D.enviroment.blocks
 {
-    public class CopperCrate: IStorageObject, IBlock, IMachine
+    public class CopperCrate: IStorageObject, IBlock//, IMachine
     {
 
         
@@ -58,6 +59,11 @@ namespace SpaceGame2D.enviroment.blocks
         public bool links_changed { get; set;}
         public StorageContainer inventory { get; }
 
+        public Item asItem()
+        {
+            return new Item(this.UniqueIdentifier, this.idle_image, this.graphic.shader);
+        }
+
         public IStorageScreen storageScreen { get; }
 
         private BlockGrid grid_private;
@@ -83,10 +89,10 @@ namespace SpaceGame2D.enviroment.blocks
 
         private void default_init(BlockGrid grid, Point position)
         {
-            HasCollision = false;
+            HasCollision = true;
             internal_block_positon = position;
             this.grid = grid;
-            Main_PhysicsThread.solver.static_physics_objects.Add(this);
+            Main_PhysicsThread.solver.QueueAddStatic(this);
             this.graphic = new RenderQuadGraphic(this, "SpaceGame2D:default", 0);
 
         }
@@ -112,7 +118,7 @@ namespace SpaceGame2D.enviroment.blocks
         public void destruct()
         {
             Main_GraphicsThread._worldGraphicObjects.Remove(this.graphic);
-            Main_PhysicsThread.solver.static_physics_objects.Remove(this);
+            Main_PhysicsThread.solver.QueueRemoveStatic(this);
             HasCollision = false;
             grid.deleteTileLocation(this.internal_block_positon);
             this.grid_private = null;
@@ -122,7 +128,7 @@ namespace SpaceGame2D.enviroment.blocks
         {
             Vector2 last_pos = this.position_physics;
             destruct();
-            return new PhysicalItem(last_pos, this);
+            return new PhysicalItem(last_pos, asItem());
 
         }
 

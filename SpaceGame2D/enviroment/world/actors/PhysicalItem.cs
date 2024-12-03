@@ -1,11 +1,12 @@
 ﻿using SpaceGame2D.enviroment.blocks;
-using SpaceGame2D.enviroment.physics;
+using SpaceGame2D.enviroment.resources;
 using SpaceGame2D.enviroment.storage;
+using SpaceGame2D.graphics.compiledshaders;
 using SpaceGame2D.graphics.renderables;
 using SpaceGame2D.graphics.texturemanager;
 using SpaceGame2D.graphics.texturemanager.packer;
 using SpaceGame2D.threads.PhysicsThread;
-using SpaceGame2D.utilities.math;
+using SpaceGame2D.utilities.ThreadSafePhysicsSolver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,9 +51,9 @@ namespace SpaceGame2D.enviroment.world.actors
         public bool HasCollision { get; set; }
 
         public int count { get ; set; }
-        IItemSource source_block { get; set; }
+        Item source_block { get; set; }
 
-        public PhysicalItem(Vector2 start_position, IItemSource source_block)
+        public PhysicalItem(Vector2 start_position, Item source_block)
         {
             Random vel = new Random();
             this.IsActive = true;
@@ -62,9 +63,9 @@ namespace SpaceGame2D.enviroment.world.actors
             HasCollision = true;
             
             this.source_block = source_block;
-            this.graphic = new RenderQuadGraphic(this, "SpaceGame2D:default", 0);
+            this.graphic = new RenderQuadGraphic(this, source_block.shader, 0);
             this.count = 1;
-            Main_PhysicsThread.solver.active_physics_objects.Add(this);
+            Main_PhysicsThread.solver.QueueAddActive(this);
         }
 
         public void destruct()
@@ -80,7 +81,7 @@ namespace SpaceGame2D.enviroment.world.actors
         {
             if (source_block != null)
             {
-                return source_block.UpdateCurrentImage(animation_time);
+                return source_block.ItemGraphic(animation_time);
             }
             return Atlas.getTextureAnimated("null.png",0);
         }

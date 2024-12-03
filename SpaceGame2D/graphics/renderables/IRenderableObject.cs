@@ -1,5 +1,4 @@
-﻿using SpaceGame2D.enviroment.physics;
-using SpaceGame2D.graphics.texturemanager;
+﻿using SpaceGame2D.graphics.texturemanager;
 using System;
 using System.Collections.Generic;
 using System.Linq;

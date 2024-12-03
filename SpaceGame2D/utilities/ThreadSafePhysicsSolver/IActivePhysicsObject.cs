@@ -7,13 +7,13 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SpaceGame2D.enviroment.physics
+namespace SpaceGame2D.utilities.ThreadSafePhysicsSolver
 {
-    public interface IActivePhysicsObject: IStaticPhysicsObject
+    public interface IActivePhysicsObject : IStaticPhysicsObject
     {
         //public bool destroying { get ;}
         bool IsActive { get; set; }
-        
+
         new Vector2 position_physics { get; set; }
 
         public ICollideable ground { get; set; }
